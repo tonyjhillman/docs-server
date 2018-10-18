@@ -4,7 +4,7 @@
 A node or group can be failed over automatically, when it either
 becomes unavailable or experiences continuous disk-access problems.
 
-== Automatic Failover Overview
+== Understanding Automatic Failover
 
 _Automatic Failover_ — or _auto-failover_ — can be configured to fail over a node or group automatically: no immediate administrator intervention is required.
 Specifically, the Cluster Manager autonomously detects and verifies that the node or group is unavailable, and then initiates the _hard_ failover process.
