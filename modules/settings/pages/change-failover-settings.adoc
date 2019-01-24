@@ -16,7 +16,7 @@ image::admin/settings-autofailover.png[,540,align=left]
 
 The following checkboxes are provided:
 
-* *Enable auto-failover after _x_ seconds for up to _y_ event*: After the timeout period set here as _x_ seconds has elapsed, an unresponsive or malfunctioning node is failed over, provided that the limit of actionable events set here as _y_ has not yet been reached.
+* *Enable auto-failover after _x_ seconds for up to _y_ event*: After the timeout period set here as _x_ seconds has elapsed, an unresponsive or malfunctioning node is failed over, provided that the limit on actionable events set here as _y_ has not yet been reached.
 Data replicas are promoted to active on other nodes, as appropriate.
 This feature can only be used when three or more nodes are present in the cluster.
 The number of seconds to elapse is configurable: the default is 120; the minimum permitted is 5; the maximum 3600.
