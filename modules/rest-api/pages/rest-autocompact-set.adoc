@@ -2,11 +2,11 @@
 :page-topic-type: reference
 
 [abstract]
-Auto-compaction settings can be established for the cluster.
+Auto-Compaction settings can be established for the cluster.
 
 == Description
 
-Auto-Compaction settings determine the compaction process; whereby databases and their respective view-indexes are compacted.
+Auto-Compaction settings control aspects of the automated process whereby databases and view-indexes are compacted.
 
 == HTTP method and URI
 
@@ -51,25 +51,25 @@ http://[cluster-ip-address]:8091/controller/setAutoCompaction
 | Integer specifying the database fragmentation percentage that is the point at which compaction is triggered.
 
 | `databaseFragmentationThreshold[size]`
-| Integer specifying the megabytes of database fragmentation that is the point at which compaction is triggered.
+| Integer specifying the size, in megabytes, of database fragmentation that is the point at which compaction is triggered.
 
 | `viewFragmentationThreshold[percentage]`
 | Integer specifying the view fragmentation percentage that is the point at which compaction is triggered.
 
 | `viewFragmentationThreshold[size]`
-| Integer specifying the megabytes of view fragmentation that is the point at which compaction is triggered.
+| Integer specifying the size, in megabytes, of view fragmentation that is the point at which compaction is triggered.
 
 | `allowedTimePeriod[fromHour]`
-| Integer between 0 and 23 inclusive, specifying the starting hour of the time-period during which compaction can run.
+| Integer from 0 to 23 inclusive, specifying the starting hour of the time-period during which compaction can run.
 
 | `allowedTimePeriod[fromMinute]`
-| Integer between 0 and 59 inclusive, specifying the starting minute (within the specified starting hour) of the time-period during which compaction can run.
+| Integer from 0 to 59 inclusive, specifying the starting minute (within the specified starting hour) of the time-period during which compaction can run.
 
 | `allowedTimePeriod[toHour]`
-| Integer between 0 and 23 inclusive, specifying the concluding hour of the time-period during which compaction can run.
+| Integer from 0 to 23 inclusive, specifying the concluding hour of the time-period during which compaction can run.
 
 | `allowedTimePeriod[toMinute]`
-| Integer between 0 and 59 inclusive, specifying the concluding minute (within the specified concluding hour) of the time-period during which compaction can run.
+| Integer from 0 to 59 inclusive, specifying the concluding minute (within the specified concluding hour) of the time-period during which compaction can run.
 
 | `allowedTimePeriod[abortOutside]`
 | Either `true` or `false`, indicating respectively that compaction _should_ or _should not_ be aborted, if its running extends beyond the specified time of conclusion.
@@ -92,16 +92,16 @@ Individual values must be day-names, each specified with an initial capital, and
 Multiple values must be separated by a single comma, with no spaces.
 
 | `indexCircularCompaction[interval][fromHour]`
-| Integer between 0 and 23 inclusive, specifying the starting hour of the time-period during which circular index compaction, if specified, can run.
+| Integer from 0 to 23 inclusive, specifying the starting hour of the time-period during which circular index compaction, if specified, can run.
 
 | `indexCircularCompaction[interval][fromMinute]`
-| Integer between 0 and 59 inclusive, specifying the starting minute of the time-period, within the specified starting hour, during which circular index compaction, if specified, can run.
+| Integer from 0 to 59 inclusive, specifying the starting minute of the time-period, within the specified starting hour, during which circular index compaction, if specified, can run.
 
 | `indexCircularCompaction[interval][toHour]`
-| Integer between 0 and 23 inclusive, specifying the concluding hour of the time-period during which circular index compaction, if specified, can run.
+| Integer from 0 to 23 inclusive, specifying the concluding hour of the time-period during which circular index compaction, if specified, can run.
 
 | `indexCircularCompaction[interval][toMinute]`
-| Integer between 0 and 59 inclusive, specifying the concluding minute of the time-period, within the specified concluding hour, during which circular index compaction, if specified, can run.
+| Integer from 0 to 59 inclusive, specifying the concluding minute of the time-period, within the specified concluding hour, during which circular index compaction, if specified, can run.
 
 | `indexCircularCompaction[interval][abortOutside]`
 | Either `true` or `false`, indicating respectively that circular index compaction, if specified, _should_ or _should not_ be aborted, if its running extends beyond the specified time of conclusion.
