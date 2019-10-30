@@ -10,16 +10,63 @@ The examples on this page show how to monitor a replication; using the xref:mana
 Examples of monitoring XDCR with the REST API are provided in xref:rest-api:rest-xdcr-statistics.adoc[Getting XDCR Stats].
 No CLI command is available for general XDCR monitoring.
 
-As their starting-point, the examples for the UI the scenario that concluded the page xref:manage:manage-xdcr/resume-xdcr-replication.adoc[Resume a Replication].
-
 [#monitor-an-xdcr-replication-with-the-ui]
 == Monitor an XDCR Replication with the UI
 
-Information on current XDCR replications is provided by Couchbase Web Console _per bucket_.
-Therefore, to check status, access the *Buckets* screen (rather than the *XDCR* screen).
+Proceed as follows:
 
-[#access-buckets-statistics-source]
-=== Access Statistics for the Source Bucket
+. Access Couchbase Web Console.
++
+Left-click on the XDCR tab, in the right-hand navigation menu.
++
+[#left_click_on_xdcr_tab]
+image::manage-xdcr/left-click-on-xdcr-tab.png[,90,align=middle]
++
+This displays the *XDCR Replications* screen.
+The lower part of the main panel features an *Outgoing Replications* panel that currently has the following appearance:
++
+[#xdcr-ongoing-replications-panel-with-xdcr-tab]
+image::manage-xdcr/outgoingReplicationsPanelWithXDCRtab.png[,800,align=left]
++
+As this indicates, a replication is ongoing.
+
+. To view statistics on the replication, left-click on the *XDCR Stats* tab:
++
+image::manage-xdcr/left-click-on-xdcr-stats-tab.png[,90,align=middle]
++
+Statistics for the replication are now displayed, as follows:
++
+image::manage-xdcr/newStatsPanel.png[,800,align=left]
+
+[#reading-xdcr-statistics]
+=== Reading XDCR Statistics
+
+Each of the charts displayed in the *XDCR Stats* panel is interactive: the mouse cursor can therefore be used to highlight information.
+
+The individual charts are as follows.
+
+[#xdcr-checked-ratio]
+=== XDCR Checked Ratio
+
+The percentage of documents in the bucket that are being checked for mutations, in the displayed time period.
+
+[#xdcr-replication-rate]
+=== XDCR Replication Rate
+
+The rate at which documents are being replicated.
+
+[#xdcr-mutations]
+=== XDCR Mutations
+
+[#xdcr-mutations-skipped]
+=== XDCR Mutations Skipped
+
+
+
+
+
+
+
 
 Proceeds as follows:
 
