@@ -81,7 +81,7 @@ In the following example, the `check` command is again used, this time with flag
 the sole `field` to be checked is specified as `geo.alt`; and the number of terms within it is specified as `150`:
 
 ----
-sudo /opt/couchbase/bin/cbft-bleve check /opt/couchbase/var/lib/couchbase/data/@fts/\
+/opt/couchbase/bin/cbft-bleve check /opt/couchbase/var/lib/couchbase/data/@fts/\
 mossIndex_690ef363c7557832_54820232.pindex -c 150 -f geo.alt
 ----
 

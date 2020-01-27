@@ -240,7 +240,7 @@ cbft-bleve zap footer [zap-file-path] [flags]
 The following example prints out the footer of the specified Zap file:
 
 ----
-sudo /opt/couchbase/bin/cbft-bleve zap footer \
+/opt/couchbase/bin/cbft-bleve zap footer \
 /Library/Application\ Support/\
 Couchbase/var/lib/couchbase/data/@fts/\
 demoIndex_1125629e41599ad8_1c9ffdcc.pindex/store/000000000026.zap
