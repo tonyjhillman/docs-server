@@ -2,7 +2,7 @@
 :page-aliases: architecture:terminology
 
 [abstract]
-Principal terms and their meanings.
+Principal terms and their meanings...
 
 The following glossary introduces the principal terms used in descriptions of Couchbase Server-technology.
 Use the links to locate the full descriptions of each.
