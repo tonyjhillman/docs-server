@@ -970,50 +970,18 @@ Exiting the shell.
 $
 ----
 
-== Accessing a Secure Bucket
-
-If your bucket has a password, you can pass the bucket name and bucket password like so:
-
-[source,console]
-----
-$ ./cbq -engine="http://<bucketname>:<bucketpassword>@123.45.67.89:8091/"
-----
-
-For the 'beer-sample' bucket, if you add a password to it of _w1fg2Uhj89_ (as by default it has none), the command to start [.cmd]`cbq` would look like this:
-
-[source,console]
-----
-$ ./cbq -engine="http://beer-sample:w1fg2Uhj89@123.45.67.89:8091/"
-----
-
-If you want to access all of the buckets in the same cbq session, you would pass in the Administrator username and password instead of the bucket level.
-
-[source,console]
-----
-$ ./cbq -engine="http://Administrator:password@123.45.67.89:8091/"
-----
-
-NOTE: These commands execute successfully only if you have loaded sample bucket 'beer-sample' either at install or from the Settings menu in the web UI.
-
 [#cbq-single-cred]
-== Providing Single User Credentials
+== Authenticating
 
-You can pass a single user name credential to the cbq shell on startup using the command line options:
-
-----
--u=username
---user=username
-----
-
-The shell then prompts you for a password.
-You can also provide a single password credential using the `-p` option.
-You cannot use this option by itself.
-It must be used with the `-u` option to specify the user name that the password is associated with.
+To access a bucket, authentication is required.
+The individual user can specify their username and password to the cbq shell on startup:
 
 ----
--p=password
---password=password
+$ ./cbq -u Administrator -p password
+ Connected to : http://localhost:8091/. Type Ctrl-D or \QUIT to exit.
 ----
+
+Alternatively, the username alone can be specified: in this case, cbq prompts for the associated password:
 
 .Example
 [source,console]
@@ -1021,40 +989,9 @@ It must be used with the `-u` option to specify the user name that the password 
 $ ./cbq -u=Administrator
 Enter Password:
 Connected to : http://localhost:8091/. Type Ctrl-D to exit.
-
-$ ./cbq -e http://localhost:8091 -u=Administrator -p=password
-Connected to : http://localhost:8091/. Type Ctrl-D to exit.
-cbq>
 ----
 
 For information on passing the user name and password credentials using other mechanisms, see <<pass-cred-shell-cmd,Passing Credentials Using the SET Shell Command>> and <<pass-cred-rest-api,Passing Credentials Using REST API>>.
-
-[#cbq-multiple-creds]
-== Providing Multiple Credentials for Authorization
-
-The cbq shell supports self-signed certificates for encrypting communication between clusters.
-
-Using the cbq shell, you can set the credentials for different users on startup or by using the SET shell commands to set the credentials query parameter.
-You can also use this to provide authentication credentials for multiple SASL buckets per session.
-Depending on the type of credential being set, there are multiple possible values for the credentials query parameter.
-
-To set the credentials for different users on startup, use one of the following options:
-
-----
--c=list-of-creds
---credentials=list-of-creds
-----
-
-The [.var]`list-of-creds` can take either one or multiple credentials.
-The credentials consist of an identity and a password separated by a colon `:`.
-To specify multiple credentials, append all the user names and passwords to the same credentials array.
-For example:
-
-----
--c=travel-sample:pwd1,beer-sample:pwd2
-----
-
-For information on passing a single user name credential to the cbq shell, see <<cbq-single-cred>>.
 
 [#pass-cred-shell-cmd]
 === Passing Credentials Using the SET Shell Command
@@ -1077,38 +1014,13 @@ To do so, set the [.param]`-creds` query parameter for the session using the fol
 === Passing Credentials Using Query REST API
 
 You can use query REST API to pass credentials from clients.
-
-For SASL buckets, you can pass the credentials as:
-
-[source,json]
-----
-[  {
-     "user":"travel-sample",
-     "pass":"password"
-   }  ]
-----
-
-If you are using the Administrator credentials:
+For example:
 
 [source,json]
 ----
 [  {
         "user":"Administrator",
         "pass":"password"
-   }  ]
-----
-
-For multiple SASL protected buckets, you can pass an array of authentication credentials:
-
-[source,json]
-----
-[  {
-        "user":"beer-sample",
-        "pass":"password1"
-        },
-        {
-        "user":"travel-sample",
-        "pass":"password2"
    }  ]
 ----
 
