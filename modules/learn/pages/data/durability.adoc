@@ -6,7 +6,7 @@ _Durability_ ensures the greatest likelihood of data-writes surviving unexpected
 [#understanding-durability]
 == Understanding Durability
 
-Clients writing to Couchbase Server can optionally specify _durability requirements_; which instruct Couchbase Server to update the specified document on multiple nodes in memory and/or disk locations across the cluster; before considering the write to be committed.
+Writes to Couchbase-Server buckets can optionally be assigned _durability requirements_; which instruct Couchbase Server to update the specified document on multiple nodes in memory and/or disk locations across the cluster; before considering the write to be committed.
 The greater the number of memory and/or disk locations specified in the requirements, the greater the level of _durability_ achieved.
 
 Once the write has been committed as specified by the requirements, Couchbase Server notifies the client of success.
@@ -14,6 +14,15 @@ If commitment was not possible, Couchbase Server notifies the client of failure;
 
 Couchbase Server supports durability for single-document writes only.
 This form of write is referred to as a _durable_ or _synchronous_ write.
+
+Durability requirements are specified according to different _levels_: the higher the level, the greater the degree of durability.
+A durability level can be specified by a client, and can also be assigned to a bucket:
+
+* If a durability level is specified by the client, and no durability level has been assigned to the bucket, the durability level specified by the client is enforced as the requirement.
+
+* If no durability level is specified by the client, but a durability level _has_ been assigned to the bucket, the durability level assigned to the bucket is enforced as the requirement.
+
+* If a durability level is specified by the client, and a durability level has _also_ been assigned to the bucket, the higher durability level is enforced as the requirement.
 
 Couchbase Server supports durability for up to _two_ replicas: it _does not_ support durability for _three_ replicas.
 
@@ -38,7 +47,7 @@ In considering whether to use durability, therefore, the application-designer mu
 [#majority]
 == Majority
 
-Client-specified durability requirements use the concept of _majority_, to indicate the number of configured Data Service nodes to which commitment is required, based on the number of replicas defined for the bucket.
+Durability requirements use the concept of _majority_, to indicate the number of configured Data Service nodes to which commitment is required, based on the number of replicas defined for the bucket.
 The correspondences are as follows:
 
 [cols="2,2"]
@@ -61,7 +70,7 @@ The correspondences are as follows:
 [#durability-requirements]
 == Durability Requirements
 
-The durability requirements specified by a client are:
+Durability requirements that can be specified are:
 
 * _Level_.
 The level of durability required.
@@ -125,7 +134,7 @@ Subsequent to a durable write’s commitment and due acknowledgement, Couchbase 
 [#regular-writes]
 == Regular Writes
 
-If a client writes data to Couchbase Server without specifying durability requirements, this is considered a _regular_ (that is _asynchronous_) write.
+A write that occurs _without_ durability is considered a _regular_ (that is _asynchronous_) write.
 No durability requirement is imposed.
 Couchbase Server acknowledges success to the client as soon as the data is in the memory of the node hosting the active vBucket: Couchbase Server _does not_ confirm that the write has been propagated to any replica.
 A regular write therefore provides no guarantee of durability.
@@ -182,7 +191,7 @@ See xref:learn:buckets-memory-and-storage/storage.adoc#threading[Threading] for 
 
 When the durable-write process is complete, the application is notified that _commitment_ has occurred.
 During the time-period that starts at the point of commitment, and lasts until the point at which the new data has been fully propagated throughout the cluster (this being potentially but not necessarily later than the point of commitment), if an outage occurs, the new data is guaranteed to be protected from loss &#8212; _within certain constraints_.
-The constraints are related to the _level_ of durability specified by the client, the nature of the outage, and the number of replicas.
+The constraints are related to the _level_ of durability specified, the nature of the outage, and the number of replicas.
 The guarantees and associated constraints are stated on this page, below.
 
 [#replica-count-restriction]
