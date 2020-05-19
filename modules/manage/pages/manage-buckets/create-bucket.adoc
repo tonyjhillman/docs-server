@@ -10,7 +10,7 @@ _Full_ and _Cluster_ Administrators can use Couchbase Web Console, the CLI, or t
 The examples in the subsections below show how to create a bucket by means of the xref:manage:manage-buckets/create-bucket.adoc#create-bucket-using-couchbase-web-console[UI], xref:manage:manage-buckets/create-bucket.adoc#create-bucket-with-the-cli[CLI] and xref:manage:manage-buckets/create-bucket.adoc#create-bucket-with-the-rest-api[REST API].
 
 [#create-bucket-using-couchbase-web-console]
-== Create a Bucket Using Couchbase Web Console
+== Create a Bucket with The UI
 
 A maximum of 30 buckets can be created per cluster.
 To create a bucket, access Couchbase Web Console, and left-click on the [.ui]*Buckets* tab, in the vertical navigation-bar at the left-hand side:
@@ -201,7 +201,7 @@ curl -v -X POST http://10.143.201.101:8091/pools/default/buckets \
 ----
 
 This creates a _Couchbase_ bucket named `testBucket`, with a RAM size of `512`.
-Note that a minimum durability level of `majorityAndPersistActive` is specified: other permitted settings for this parameter are 'none' (the default), `majority`, and `persistToMajority`.
+Note that a minimum durability level of `majorityAndPersistActive` is specified: other permitted settings for this parameter are `none` (the default), `majority`, and `persistToMajority`.
 For details on the significance of these settings, see xref:learn:data/durability.adoc[Durability].
 (Note that an _Ephemeral_ bucket, when created, can only use the `none` and `majority` settings, for this parameter.)
 
