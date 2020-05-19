@@ -15,18 +15,12 @@ If commitment was not possible, Couchbase Server notifies the client of failure;
 Couchbase Server supports durability for single-document writes only.
 This form of write is referred to as a _durable_ or _synchronous_ write.
 
-Durability requirements are specified according to different _levels_: the higher the level, the greater the degree of durability.
-A durability level can be specified by a client, and can also be assigned to a bucket:
-
-* If a durability level is specified by the client, and no durability level has been assigned to the bucket, the durability level specified by the client is enforced as the requirement.
-
-* If no durability level is specified by the client, but a durability level _has_ been assigned to the bucket, the durability level assigned to the bucket is enforced as the requirement.
-
-* If a durability level is specified by the client, and a durability level has _also_ been assigned to the bucket, the higher durability level is enforced as the requirement.
-
 Couchbase Server supports durability for up to _two_ replicas: it _does not_ support durability for _three_ replicas.
 
 Durability is used by xref:learn:data/transactions.adoc[Transactions], which support the _atomicity_ of mutations across multiple documents.
+
+Durability requirements can be specified by a client, assigned to a bucket, or both.
+Both Couchbase and Ephemeral buckets are supported: however, Ephemeral buckets only support durability requirements that do not involve persistence to disk.
 
 [#durability-benefits-and-costs]
 == Benefits and Costs
@@ -78,18 +72,32 @@ The possible values are:
 
 ** _majority_.
 The mutation must be replicated to (that is, held in the memory allocated to the bucket on) a majority of the Data Service nodes.
+Valid for both Couchbase and Ephemeral buckets.
 
 ** _majorityAndPersistActive_.
 The mutation must be replicated to a majority of the Data Service nodes.
 Additionally, it must be _persisted_ (that is, written and synchronised to disk) on the node hosting the active vBucket for the data.
+Valid for Couchbase buckets only.
 
 ** _persistToMajority_.
 The mutation must be persisted to a majority of the Data Service nodes.
 Accordingly, it will be written to disk on those nodes.
+Valid for Couchbase buckets only.
 
 * _Timeout_.
 The number of milliseconds within which the durability requirements must be met.
 The SDK specifies a default of 2500.
+
+[#specifying-levels]
+== Specifying Levels
+
+Durability _levels_ can be specified by a client, and can also be assigned to a bucket:
+
+* If a level is specified by the client, and no level has been assigned to the bucket, the level specified by the client is enforced.
+
+* If no level is specified by the client (meaning that a non-durable write is being requested), but a level _has_ been assigned to the bucket, the level assigned to the bucket is enforced.
+
+* If a level is specified by the client, and a level has _also_ been assigned to the bucket, the higher level is enforced.
 
 [#process-and-communication]
 == Process and Communication
