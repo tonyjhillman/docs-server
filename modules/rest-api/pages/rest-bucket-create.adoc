@@ -15,48 +15,119 @@ POST /pools/default/buckets
 
 This creates a bucket.
 The bucket can be of any available type: Couchbase, Ephemeral, or Memcached.
-A name for the bucket, unique across the server, must be specified.
+A name for the bucket, unique across the cluster, must be specified.
 Names cannot be longer than 100 bytes (which is to say, characters).
+
+A maximum of 30 buckets can be created on a single cluster.
 
 [#curl-syntax]
 == Curl Syntax
 
+Note that all floats and integers in the following are _positive_ only.
+
 ----
 curl -X POST -u <administrator>:<password>
-http://<ip-address-or-hostname>:<port>/pools/default/buckets
--d name=<bucketName>
--d bucketType=[ couchbase | ephemeral | memcached ]
--d ramQuotaMB=<integer>
--d autoCompactionDefined=[ true | false ]
--d evictionPolicy=[
+  http://<ip-address-or-hostname>:<port>/pools/default/buckets
+  -d name=<bucketName>
+  -d bucketType=[ couchbase | ephemeral | memcached ]
+  -d ramQuotaMB=<integer>
+  -d evictionPolicy=[
           [ valueOnly | full ] |
           [ noEviction | nruEviction ]
         ]
--d durabilityMinLevel=[
+  -d durabilityMinLevel=[
           [ none | majority | majorityAndPersistActive | persistToMajority ] |
           [ none | majority ]
         ]
--d threadsNumber=[ 3 | 8 ]
--d replicaNumber=[ 1 | 2 | 3 ]
--d compressionMode=passive
--d maxTTL=0
--d replicaIndex=0
--d conflictResolutionType=[ seqno | lww ]
--d parallelDBAndViewCompaction=true \
--d databaseFragmentationThreshold%5Bpercentage%5D=30 \
--d databaseFragmentationThreshold%5Bsize%5D=2097152 \
--d viewFragmentationThreshold%5Bpercentage%5D=30 \
--d viewFragmentationThreshold%5Bsize%5D=2097152 \
--d indexCompactionMode=circular \
--d purgeInterval=3 \
--d allowedTimePeriod%5BabortOutside%5D=true \
--d allowedTimePeriod%5BtoMinute%5D=0 \
--d allowedTimePeriod%5BtoHour%5D=2 \
--d allowedTimePeriod%5BfromMinute%5D=30 \
--d allowedTimePeriod%5BfromHour%5D=1 \
--d ramQuotaMB=768 \
--d flushEnabled=0
+  -d threadsNumber=[ 3 | 8 ]
+  -d replicaNumber=[ 1 | 2 | 3 ]
+  -d compressionMode=[ off | passive | active ]
+  -d maxTTL=<integer>
+  -d replicaIndex=[ 0 | 1 ]
+  -d conflictResolutionType=[ seqno | lww ]
+  -d autoCompactionDefined=[ true | false ]
+  -d parallelDBAndViewCompaction=[ true | false ]
+  -d databaseFragmentationThreshold[percentage]=<integer>
+  -d databaseFragmentationThreshold[size]=<integer>
+  -d viewFragmentationThreshold[percentage]=<integer>
+  -d viewFragmentationThreshold[size]=<integer>
+  -d indexCompactionMode=[ circular | append ]
+  -d purgeInterval=[ <float> | <integer> ]
+  -d allowedTimePeriod[abortOutside]=true
+  -d allowedTimePeriod[toMinute]=<integer>
+  -d allowedTimePeriod[toHour]=<integer>
+  -d allowedTimePeriod[fromMinute]=<integer>
+  -d allowedTimePeriod[fromHour]=<integer>
+  -d ramQuotaMB=<integer>
+  -d flushEnabled=[ 0 | 1 ]
 ----
+
+The parameters are as follows:
+
+* `name`.
+A name for the bucket.
+The name must be unique among the bucket-names defined for the cluster, and cannot be longer than 100 characters.
+Acceptable characters are `A-Z`, `a-z`, and `0-9`.
+Additionally, the _underscore_, _period_, _dash_, and _percent_ characters can be used.
++
+A name _must_ be specified.
+If no name or an improperly designed name is specified, a JSON document is returned, notifying of the error.
+For example: : `{"name":"Bucket name needs to be specified"}`.
+
+* `bucketType`.
+The _type_ of the bucket, which can be `couchbase` (which is the default), `ephemeral`, or `memcached`.
+For a detailed explanation of bucket types, see xref:learn:buckets-memory-and-storage/buckets.adoc[Buckets].
++
+If an invalid bucket type is specified, an error occurs; and the notification `{"bucketType":"invalid bucket type"}` is returned.
+
+* `ramQuota`.
+The amount of memory to be allocated to the bucket, per node, in megabytes.
+The minimum amount is 100 MB.
+The maximum amount is the total Data Service memory quota configured per node, minus the amount already assigned to other buckets.
+For information on per node memory configuration, see the page for xref:manage:manage-settings/general-settings.adoc[General] Settings.
++
+A value for `ramQuota` _must_ be specified.
+An incorrect memory-specification returns a notification such as `{"ramQuotaMB":"RAM quota cannot be less than 100 MB"}`.
+
+* `evictionPolicy`.
+The _ejection policy_ to be assigned to and used by the bucket.
+(Note that _eviction_ is, in the current release, referred to as _ejection_; and this revised naming will continue in future releases.)
+Policy-assignment depends on bucket type.
+For a _Couchbase_ bucket, the policy can be `valueOnly` (which is the default) or `full`.
+For an _Ephemeral_ bucket, the policy can be `noEviction` (which is the default) or `nruEviction`.
+No policy can be assigned to a _Memcached_ bucket.
++
+Incorrect specification of an ejection policy returns an error-notification, such as `{"evictionPolicy":"Eviction policy must be either 'valueOnly' or 'fullEviction' for couchbase buckets"}`
++
+For information on ejection policies, see xref:learn:buckets-memory-and-storage/buckets.adoc#bucket-types[Bucket Types].
+For general information on memory management in the context of ejection, see xref:learn:buckets-memory-and-storage/memory.adoc#ejection[Ejection].
+
+* `durabilityMinLevel`.
+A _durability level_ to be assigned to the bucket, as the minimum level at which all writes to the bucket must occur.
+Level-assignment depends on bucket type.
+For a _Couchbase_ bucket, the level can be `none`, `majority`, `majorityAndPersistActive`, or `persistToMajority`.
+For an _Ephemeral_ bucket, the level can be `none` or `majority`.
+No level can be assigned to a _Memcached_ bucket.
++
+For information on durability and levels, see xref:learn:data/durability.adoc[Durability].
+
+* `threadsNumber`.
+The _priority_ for the bucket, as described in xref:manage:manage-buckets/create-bucket.adoc#bucket-priority[Create a Bucket].
+Priority can be established as either _Low_ or _High_.
+To establish priority as _Low_ (which is the default), the value of `threadsNumber` must be `3`.
+To establish priority as _High_, the value must be `8`.
+If any other value is used, the value is ignored; and the bucket's priority remains low.
+
+* `replicaNumber`.
+The number of _replicas_ for the bucket.
+For information on replicas and replication, see xref:learn:clusters-and-availability/intra-cluster-replication.adoc[Intra-Cluster Replication] and xref:learn:buckets-memory-and-storage/vBuckets.adoc[vBuckets].
+The possible values are `1` (which is the default), `2`, and `3`.
++
+If more replicas are requested that can be assigned to the cluster, due to an insufficiency of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
+
+* `autoCompactionDefined`.
+Whether the default _auto-compaction_ settings are to be modified for this bucket.
+The value specified can be either `true` or `false` (which is the default).
 
 .Create bucket parameters
 [cols="100,237"]
