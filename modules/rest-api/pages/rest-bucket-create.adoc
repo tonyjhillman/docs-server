@@ -97,7 +97,7 @@ For a _Couchbase_ bucket, the policy can be `valueOnly` (which is the default) o
 For an _Ephemeral_ bucket, the policy can be `noEviction` (which is the default) or `nruEviction`.
 No policy can be assigned to a _Memcached_ bucket.
 +
-Incorrect specification of an ejection policy returns an error-notification, such as `{"evictionPolicy":"Eviction policy must be either 'valueOnly' or 'fullEviction' for couchbase buckets"}`
+Incorrect specification of an ejection policy returns an error-notification, such as `{"evictionPolicy":"Eviction policy must be either 'valueOnly' or 'fullEviction' for couchbase buckets"}`.
 +
 For information on ejection policies, see xref:learn:buckets-memory-and-storage/buckets.adoc#bucket-types[Bucket Types].
 For general information on memory management in the context of ejection, see xref:learn:buckets-memory-and-storage/memory.adoc#ejection[Ejection].
@@ -123,7 +123,7 @@ The number of _replicas_ for the bucket.
 For information on replicas and replication, see xref:learn:clusters-and-availability/intra-cluster-replication.adoc[Intra-Cluster Replication] and xref:learn:buckets-memory-and-storage/vBuckets.adoc[vBuckets].
 The possible values are `1` (which is the default), `2`, and `3`.
 +
-If more replicas are requested that can be assigned to the cluster, due to an insufficiency of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
+If more replicas are requested than can be assigned to the cluster, due to an insufficiency of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
 
 * `autoCompactionDefined`.
 Whether the default _auto-compaction_ settings are to be modified for this bucket.
