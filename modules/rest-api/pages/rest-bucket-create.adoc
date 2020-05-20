@@ -2,41 +2,61 @@
 :page-topic-type: reference
 
 [abstract]
-To create and edit buckets, use the `POST` operation with the `/pools/default/buckets` URI.
+Buckets are created and edited with the `POST /pools/default/buckets` HTTP method and URI.
 
-== Description
+== HTTP Method and URI
 
-Buckets are created and edited with a `POST` sent to the REST URI endpoint for buckets in a cluster.
-This can be used to create either a Couchbase or a Memcached type bucket.
-Bucket names cannot have a leading underscore.
-
-This endpoint is also used to get a list of buckets that exist for a cluster.
-
-IMPORTANT: When editing bucket properties, be sure to  specify all bucket properties.
-If a bucket property is not specified (whether or not you are changing the existing value), Couchbase Server may reset the property to the default.
-Even if you do not intend to change a certain property, re-specify the existing value to avoid this behavior.
-
-The REST API returns a successful response when preliminary files for a data bucket are created on one node.
-However, if a multi-node cluster is implemented, bucket creation may not have completed for all nodes when a response is sent.
-Therefore, it is possible that the bucket is not available for operations immediately after this REST call successful returns.
-
-To verify that a bucket is available, try to read a key from the bucket.
-If a ‘key not found’ error is received or the document for the key is returned, then the bucket exists and is available to all nodes in a cluster.
-Key requests can be issued via a Couchbase Server SDK with any node in the cluster.
-See the _Couchbase Server Developer Guide_ for more information.
-
-== HTTP method and URI
-
-[source,bourne]
 ----
 POST /pools/default/buckets
 ----
 
-* Request data - List of payload parameters for the new bucket (in the body of the POST as x-www-form-urlencoded)
-* Response data - JSON of the bucket confirmation or an error condition
-* Authentication required - Yes
+[#description]
+== Description
 
-Parameters for creating buckets:
+This creates a bucket.
+The bucket can be of any available type: Couchbase, Ephemeral, or Memcached.
+A name for the bucket, unique across the server, must be specified.
+Names cannot be longer than 100 bytes (which is to say, characters).
+
+[#curl-syntax]
+== Curl Syntax
+
+----
+curl -X POST -u <administrator>:<password>
+http://<ip-address-or-hostname>:<port>/pools/default/buckets
+-d name=<bucketName>
+-d bucketType=[ couchbase | ephemeral | memcached ]
+-d ramQuotaMB=<integer>
+-d autoCompactionDefined=[ true | false ]
+-d evictionPolicy=[
+          [ valueOnly | full ] |
+          [ noEviction | nruEviction ]
+        ]
+-d durabilityMinLevel=[
+          [ none | majority | majorityAndPersistActive | persistToMajority ] |
+          [ none | majority ]
+        ]
+-d threadsNumber=[ 3 | 8 ]
+-d replicaNumber=[ 1 | 2 | 3 ]
+-d compressionMode=passive
+-d maxTTL=0
+-d replicaIndex=0
+-d conflictResolutionType=[ seqno | lww ]
+-d parallelDBAndViewCompaction=true \
+-d databaseFragmentationThreshold%5Bpercentage%5D=30 \
+-d databaseFragmentationThreshold%5Bsize%5D=2097152 \
+-d viewFragmentationThreshold%5Bpercentage%5D=30 \
+-d viewFragmentationThreshold%5Bsize%5D=2097152 \
+-d indexCompactionMode=circular \
+-d purgeInterval=3 \
+-d allowedTimePeriod%5BabortOutside%5D=true \
+-d allowedTimePeriod%5BtoMinute%5D=0 \
+-d allowedTimePeriod%5BtoHour%5D=2 \
+-d allowedTimePeriod%5BfromMinute%5D=30 \
+-d allowedTimePeriod%5BfromHour%5D=1 \
+-d ramQuotaMB=768 \
+-d flushEnabled=0
+----
 
 .Create bucket parameters
 [cols="100,237"]

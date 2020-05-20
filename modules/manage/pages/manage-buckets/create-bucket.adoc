@@ -168,8 +168,10 @@ To create a bucket with the Couchbase CLI, use the `bucket-create` command.
 For example:
 
 ----
-./couchbase-cli bucket-create --cluster 10.143.201.101:8091 \
---username Administrator --password password \
+./couchbase-cli bucket-create \
+--cluster 10.143.201.101:8091 \
+--username Administrator \
+--password password \
 --bucket testBucket \
 --bucket-type couchbase \
 --bucket-ramsize 1024 \
