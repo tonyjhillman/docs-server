@@ -13,9 +13,9 @@ POST /pools/default/buckets
 [#description]
 == Description
 
-This creates a bucket.
-The bucket can be of any available type: Couchbase, Ephemeral, or Memcached.
-A name for the bucket, unique across the cluster, must be specified.
+This creates a new or edits an existing bucket.
+The bucket can be of any type: Couchbase, Ephemeral, or Memcached.
+On creation, a bucket must be assigned a name that is unique among buckets defined on the cluster: this name cannot subsequently be changed.
 Names cannot be longer than 100 bytes (which is to say, characters).
 
 A maximum of 30 buckets can be created on a single cluster.
@@ -58,7 +58,6 @@ curl -X POST -u <administrator>:<password>
   -d allowedTimePeriod[toHour]=<integer>
   -d allowedTimePeriod[fromMinute]=<integer>
   -d allowedTimePeriod[fromHour]=<integer>
-  -d ramQuotaMB=<integer>
   -d flushEnabled=[ 0 | 1 ]
 ----
 
@@ -71,14 +70,15 @@ Acceptable characters are `A-Z`, `a-z`, and `0-9`.
 Additionally, the _underscore_, _period_, _dash_, and _percent_ characters can be used.
 +
 A name _must_ be specified.
-If no name or an improperly designed name is specified, a JSON document is returned, notifying of the error.
+If no name or an improperly designed name is specified, an error-notification is returned.
 For example: : `{"name":"Bucket name needs to be specified"}`.
+Note that a bucket-name _cannot_ be changed after bucket-creation.
 
 * `bucketType`.
 The _type_ of the bucket, which can be `couchbase` (which is the default), `ephemeral`, or `memcached`.
 For a detailed explanation of bucket types, see xref:learn:buckets-memory-and-storage/buckets.adoc[Buckets].
 +
-If an invalid bucket type is specified, an error occurs; and the notification `{"bucketType":"invalid bucket type"}` is returned.
+If an invalid bucket type is specified, the error-notification `{"bucketType":"invalid bucket type"}` is returned.
 
 * `ramQuota`.
 The amount of memory to be allocated to the bucket, per node, in megabytes.
@@ -91,7 +91,7 @@ An incorrect memory-specification returns a notification such as `{"ramQuotaMB":
 
 * `evictionPolicy`.
 The _ejection policy_ to be assigned to and used by the bucket.
-(Note that _eviction_ is, in the current release, referred to as _ejection_; and this revised naming will continue in future releases.)
+(Note that _eviction_ is, in the current release, referred to as _ejection_; and this revised naming will continue to be used in future releases.)
 Policy-assignment depends on bucket type.
 For a _Couchbase_ bucket, the policy can be `valueOnly` (which is the default) or `full`.
 For an _Ephemeral_ bucket, the policy can be `noEviction` (which is the default) or `nruEviction`.
@@ -121,9 +121,18 @@ If any other value is used, the value is ignored; and the bucket's priority rema
 * `replicaNumber`.
 The number of _replicas_ for the bucket.
 For information on replicas and replication, see xref:learn:clusters-and-availability/intra-cluster-replication.adoc[Intra-Cluster Replication] and xref:learn:buckets-memory-and-storage/vBuckets.adoc[vBuckets].
-The possible values are `1` (which is the default), `2`, and `3`.
+The possible values are `0` (which _disables_ replication, and therefore ensures that no replicas will be maintained), `1` (which is the default), `2`, and `3`.
+If a number greater than `3` is specified, the following error-notification is returned: `{"replicaNumber":"Replica number larger than 3 is not supported."}`.
 +
-If more replicas are requested than can be assigned to the cluster, due to an insufficiency of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
+If more replicas are requested than can be assigned to the cluster, due to an insufficient number of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
+
+* `compressionMode`.
+The _compression mode_ for the bucket.
+The possible values are `off`, `passive` (which is the default), and `active`.
+If the value is incorrectly specified, the following error-notification is returned: `{"compressionMode":"compressionMode can be set to 'off', 'passive' or 'active'"}`.
++
+For information on compression and compression modes, see xref:learn:buckets-memory-and-storage/compression.adoc[Compression].
+
 
 * `autoCompactionDefined`.
 Whether the default _auto-compaction_ settings are to be modified for this bucket.
