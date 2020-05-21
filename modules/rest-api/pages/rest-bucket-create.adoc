@@ -23,7 +23,7 @@ A maximum of 30 buckets can be created on a single cluster.
 [#curl-syntax]
 == Curl Syntax
 
-Note that all floats and integers in the following are _positive_ only.
+Note that all floats and integers in the following are _non-negative_ only.
 
 ----
 curl -X POST -u <administrator>:<password>
@@ -97,6 +97,8 @@ For a _Couchbase_ bucket, the policy can be `valueOnly` (which is the default) o
 For an _Ephemeral_ bucket, the policy can be `noEviction` (which is the default) or `nruEviction`.
 No policy can be assigned to a _Memcached_ bucket.
 +
+If an existing bucket's ejection policy is modified, the bucket is restarted with the new setting: this may cause inaccessibility of data, during the bucket's warm-up period.
++
 Incorrect specification of an ejection policy returns an error-notification, such as `{"evictionPolicy":"Eviction policy must be either 'valueOnly' or 'fullEviction' for couchbase buckets"}`.
 +
 For information on ejection policies, see xref:learn:buckets-memory-and-storage/buckets.adoc#bucket-types[Bucket Types].
@@ -133,10 +135,54 @@ If the value is incorrectly specified, the following error-notification is retur
 +
 For information on compression and compression modes, see xref:learn:buckets-memory-and-storage/compression.adoc[Compression].
 
+* `maxTTL`.
+The bucket's _Time To Live_ (TTL); which imposes a maximum lifespan on items within a bucket, and thus ensures the expiration of such items, once the specified period is complete.
+The value must be an integer, which specifies a number of seconds.
+The maximum value is MAX32INT (`2147483648` seconds, or `68.096` years).
+The default value is `0`, which disables TTL for the bucket.
+Specifying any positive value up to MAX32INT enables TTL for the bucket.
+Specifying an incorrect value returns an error-notification such as the following: `{"maxTTL":"Max TTL must be an integer between 0 and 2147483647"}`.
++
+For information on TTL, see xref:learn:buckets-memory-and-storage/expiration.adoc[Expiration].
+
+* `replicaIndex`.
+Specifies whether _View Indexes_ are to be replicated.
+The value can be either `0` (which is the default), specifying that they are _not_ to be replicated; or `1`, specifying that they _are_ to be replicated.
+Specifying any other value returns an error-notification such as the following: `{"replicaIndex":"replicaIndex can only be 1 or 0"}`.
++
+This option is valid for Couchbase buckets only.
+Note that there may be, at most, _one_ replica view index.
+
+* `conflictResolutionType`.
+Specifies the _conflict resolution type_ for the bucket.
+The value can be `seqno` (which is the default), specifying sequence-number based resolution; or `lww` (_last write wins_), specifying timestamp-based resolution.
+The value _cannot_ be changed after bucket-creation.
++
+For information on conflict resolution, see: xref:learn:clusters-and-availability/xdcr-conflict-resolution.adoc[XDCR Conflict Resolution].
 
 * `autoCompactionDefined`.
-Whether the default _auto-compaction_ settings are to be modified for this bucket.
+Specifies whether the default _auto-compaction_ settings are to be modified for this bucket.
 The value specified can be either `true` or `false` (which is the default).
+If the value is `false`, parameter-values that attempt to modify the default auto-compaction settings are ignored.
+If the value is incorrectly specified, an error-notification such as the following is returned: `{"autoCompactionDefined":"autoCompactionDefined is invalid"}`.
++
+Note that if `autoCompactionDefined` is specified as `true`, `parallelDBAndViewCompaction` must also be defined.
+Otherwise, an error-notification such as the following is returned: `{"parallelDBAndViewCompaction":"parallelDBAndViewCompaction is missing"}`.
++
+Auto-compaction settings are unnecessary for _memory-optimized_ indexes.
+For information on index storage, see xref:learn:services-and-indexes/indexes/storage-modes.adoc[Storage Settings].
++
+For further information on auto-compaction settings, see xref:manage:manage-settings/configure-compact-settings.adoc[Auto-Compaction].
+
+* `parallelDBAndViewCompaction`.
+Specifies whether compaction should occur to documents and view indexes in parallel.
+This is a _global_ setting, which therefore affects _all_ buckets on the cluster.
+The value can either be `true` or `false` (which is the default).
+If the value is incorrectly specified, the following error-notification is returned: `{"parallelDBAndViewCompaction":"parallelDBAndViewCompaction is invalid"}`.
++
+This parameter-value is ignored if `autoCompactionDefined` is `false`.
+
+
 
 .Create bucket parameters
 [cols="100,237"]
