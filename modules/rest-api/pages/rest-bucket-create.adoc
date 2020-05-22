@@ -4,16 +4,19 @@
 [abstract]
 Buckets are created and edited with the `POST /pools/default/buckets` HTTP method and URI.
 
-== HTTP Method and URI
+[#http-methods-and-uris]
+== HTTP Methods and URIs
 
 ----
 POST /pools/default/buckets
+
+POST /pools/default/buckets/<bucketName>
 ----
 
 [#description]
 == Description
 
-This creates a new or edits an existing bucket.
+These respectively create a new bucket and edit an existing bucket.
 The bucket can be of any type: Couchbase, Ephemeral, or Memcached.
 On creation, a bucket must be assigned a name that is unique among buckets defined on the cluster: this name cannot subsequently be changed.
 Names cannot be longer than 100 bytes (which is to say, characters).
@@ -64,21 +67,26 @@ curl -X POST -u <administrator>:<password>
 The parameters are as follows:
 
 * `name`.
-A name for the bucket.
+A name for a bucket that is to be created.
 The name must be unique among the bucket-names defined for the cluster, and cannot be longer than 100 characters.
 Acceptable characters are `A-Z`, `a-z`, and `0-9`.
 Additionally, the _underscore_, _period_, _dash_, and _percent_ characters can be used.
 +
-A name _must_ be specified.
-If no name or an improperly designed name is specified, an error-notification is returned.
+The name parameter _must_ be specified, if a bucket is being created.
+If it is not, or if the intended name is improperly designed, an error-notification is returned.
 For example: : `{"name":"Bucket name needs to be specified"}`.
 Note that a bucket-name _cannot_ be changed after bucket-creation.
+Therefore, if this parameter is specified in an attempt to edit the bucket-configuration, it is ignored.
+To edit the configuration of an existing bucket, the bucket-name must be specified as the `<bucketName>` path-parameter; as indicated above, in xref:rest-api:rest-bucket-create.adoc#http-methods-and-uris[HTTP Methods and URIs].
 
 * `bucketType`.
 The _type_ of the bucket, which can be `couchbase` (which is the default), `ephemeral`, or `memcached`.
 For a detailed explanation of bucket types, see xref:learn:buckets-memory-and-storage/buckets.adoc[Buckets].
 +
 If an invalid bucket type is specified, the error-notification `{"bucketType":"invalid bucket type"}` is returned.
++
+This parameter _cannot_ be modified, following bucket-creation.
+Therefore, if it is specified in an attempt to edit the bucket-configuration, the parameter is ignored.
 
 * `ramQuota`.
 The amount of memory to be allocated to the bucket, per node, in megabytes.
@@ -86,7 +94,8 @@ The minimum amount is 100 MB.
 The maximum amount is the total Data Service memory quota configured per node, minus the amount already assigned to other buckets.
 For information on per node memory configuration, see the page for xref:manage:manage-settings/general-settings.adoc[General] Settings.
 +
-A value for `ramQuota` _must_ be specified.
+A value for `ramQuota` _must_ be specified: the value _can_ be modified, following bucket-creation.
++
 An incorrect memory-specification returns a notification such as `{"ramQuotaMB":"RAM quota cannot be less than 100 MB"}`.
 
 * `evictionPolicy`.
@@ -97,7 +106,8 @@ For a _Couchbase_ bucket, the policy can be `valueOnly` (which is the default) o
 For an _Ephemeral_ bucket, the policy can be `noEviction` (which is the default) or `nruEviction`.
 No policy can be assigned to a _Memcached_ bucket.
 +
-If an existing bucket's ejection policy is modified, the bucket is restarted with the new setting: this may cause inaccessibility of data, during the bucket's warm-up period.
+This value _can_ be modified, following bucket-creation.
+If such modification occurs, the bucket is restarted with the new setting: this may cause inaccessibility of data, during the bucket's warm-up period.
 +
 Incorrect specification of an ejection policy returns an error-notification, such as `{"evictionPolicy":"Eviction policy must be either 'valueOnly' or 'fullEviction' for couchbase buckets"}`.
 +
@@ -111,6 +121,8 @@ For a _Couchbase_ bucket, the level can be `none`, `majority`, `majorityAndPersi
 For an _Ephemeral_ bucket, the level can be `none` or `majority`.
 No level can be assigned to a _Memcached_ bucket.
 +
+This parameter _can_ be modified, following bucket-creation.
++
 For information on durability and levels, see xref:learn:data/durability.adoc[Durability].
 
 * `threadsNumber`.
@@ -119,6 +131,12 @@ Priority can be established as either _Low_ or _High_.
 To establish priority as _Low_ (which is the default), the value of `threadsNumber` must be `3`.
 To establish priority as _High_, the value must be `8`.
 If any other value is used, the value is ignored; and the bucket's priority remains low.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `{"threadsNumber":"The number of threads must be an integer between 2 and 8"}`.
+(Note that, as indicated above, all values other than `3` and `8` are ignored.)
++
+This parameter _can_ be modified, following bucket-creation.
+If such modification occurs, the bucket is restarted with the new setting: this may cause inaccessibility of data, during the bucket's warm-up period.
 
 * `replicaNumber`.
 The number of _replicas_ for the bucket.
@@ -127,11 +145,16 @@ The possible values are `0` (which _disables_ replication, and therefore ensures
 If a number greater than `3` is specified, the following error-notification is returned: `{"replicaNumber":"Replica number larger than 3 is not supported."}`.
 +
 If more replicas are requested than can be assigned to the cluster, due to an insufficient number of nodes, no notification is returned. Instead, the maximum possible number of replicas is created: additional replicas will be added subsequently, if more nodes become available.
++
+This parameter _can_ be modified, following bucket-creation.
+Such modification may require a rebalance: for information, see xref:learn:clusters-and-availability/rebalance.adoc[Rebalance].
 
 * `compressionMode`.
 The _compression mode_ for the bucket.
 The possible values are `off`, `passive` (which is the default), and `active`.
 If the value is incorrectly specified, the following error-notification is returned: `{"compressionMode":"compressionMode can be set to 'off', 'passive' or 'active'"}`.
++
+This parameter _can_ be modified, following bucket-creation.
 +
 For information on compression and compression modes, see xref:learn:buckets-memory-and-storage/compression.adoc[Compression].
 
@@ -142,6 +165,8 @@ The maximum value is MAX32INT (`2147483648` seconds, or `68.096` years).
 The default value is `0`, which disables TTL for the bucket.
 Specifying any positive value up to MAX32INT enables TTL for the bucket.
 Specifying an incorrect value returns an error-notification such as the following: `{"maxTTL":"Max TTL must be an integer between 0 and 2147483647"}`.
++
+This parameter _can_ be modified, following bucket-creation.
 +
 For information on TTL, see xref:learn:buckets-memory-and-storage/expiration.adoc[Expiration].
 
@@ -156,7 +181,9 @@ Note that there may be, at most, _one_ replica view index.
 * `conflictResolutionType`.
 Specifies the _conflict resolution type_ for the bucket.
 The value can be `seqno` (which is the default), specifying sequence-number based resolution; or `lww` (_last write wins_), specifying timestamp-based resolution.
++
 The value _cannot_ be changed after bucket-creation.
+Therefore, if the parameter is specified in an attempt to edit the bucket-configuration, it is ignored.
 +
 For information on conflict resolution, see: xref:learn:clusters-and-availability/xdcr-conflict-resolution.adoc[XDCR Conflict Resolution].
 
