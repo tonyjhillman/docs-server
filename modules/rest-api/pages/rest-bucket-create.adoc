@@ -163,7 +163,7 @@ For information on conflict resolution, see: xref:learn:clusters-and-availabilit
 * `autoCompactionDefined`.
 Specifies whether the default _auto-compaction_ settings are to be modified for this bucket.
 The value specified can be either `true` or `false` (which is the default).
-If the value is `false`, parameter-values that attempt to modify the default auto-compaction settings are ignored.
+If the value is `false`, any parameter-values specified in order to modify the default auto-compaction settings are ignored.
 If the value is incorrectly specified, an error-notification such as the following is returned: `{"autoCompactionDefined":"autoCompactionDefined is invalid"}`.
 +
 Note that if `autoCompactionDefined` is specified as `true`, `parallelDBAndViewCompaction` must also be defined.
@@ -180,234 +180,71 @@ This is a _global_ setting, which therefore affects _all_ buckets on the cluster
 The value can either be `true` or `false` (which is the default).
 If the value is incorrectly specified, the following error-notification is returned: `{"parallelDBAndViewCompaction":"parallelDBAndViewCompaction is invalid"}`.
 +
-This parameter-value is ignored if `autoCompactionDefined` is `false`.
+This parameter-value is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
+* `databaseFragmentationThreshold[percentage]`.
+Specifies, as a percentage, the level of database fragmentation that must be reached for data compaction to be automatically triggered.
+The assigned value must be an integer.
+The default value is `"undefined"`.
++
+If a value for `databaseFragmentationThreshold[size]` is also specified, data compaction is automatically triggered as soon as the threshold specified by one parameter or the other is reached.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `"databaseFragmentationThreshold[percentage]":"database fragmentation must be an integer"`.
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
+* `databaseFragmentationThreshold[size]`.
+Specifies, as a size in megabytes, the level of database fragmentation that must be reached for data compaction to be automatically triggered.
+The assigned value must be an integer.
+The default value is `"undefined"`.
++
+If a value for `databaseFragmentationThreshold[threshold]` is also specified, data compaction is automatically triggered as soon as the threshold specified by one parameter or the other is reached.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `"databaseFragmentationThreshold[size]":"database fragmentation must be an integer"`.
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
-.Create bucket parameters
-[cols="100,237"]
-|===
-| Payload Arguments | Description
+* `viewFragmentationThreshold[percentage]`.
+Specifies, as a percentage, the level of View fragmentation that must be reached for View compaction to be automatically triggered.
+The assigned value must be an integer.
+The default value is `"undefined"`.
++
+If a value for `viewFragmentationThreshold[size]` is also specified, View compaction is automatically triggered as soon as the threshold specified by one parameter or the other is reached.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `"viewFragmentationThreshold[percentage]":"view fragmentation must be an integer"`.
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
-| `authType`
-| Required parameter.
-Type of authorization to be enabled for the new bucket as a string.
-Defaults to blank password if not specified.
-"sasl" enables authentication.
-"none" disables authentication.
+* `viewFragmentationThreshold[size]`.
+Specifies, as a size in megabytes, the level of View fragmentation that must be reached for View compaction to be automatically triggered.
+The assigned value must be an integer.
+The default value is `"undefined"`.
++
+If a value for `viewFragmentationThreshold[threshold]` is also specified, View compaction is automatically triggered as soon as the threshold specified by one parameter or the other is reached.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `"viewFragmentationThreshold[size]":"view fragmentation size must be an integer"`.
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
-| `bucketType`
-| Required parameter.
-Type of bucket to be created.
-String value.
-"memcached" configures as Memcached bucket.
-"couchbase" configures as Couchbase bucket.
-This cannot be changed for a pre-existing bucket.
+* `indexCompactionMode`.
+Specifies the write-strategy for index compaction.
+The value can either be `circular` (which is the default) or `append`.
+For information on index compaction, see xref:learn:services-and-indexes/indexes/storage-modes.adoc#standard-index-storage.
++
+This parameter is only valid for Couchbase Server Community Edition: it is ignored if specified on Enterprise Edition.
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
-| `conflictResolutionType`
-| Optional parameter.
-String value '[.in]``lww``' (conflict resolution based on _timestamp_) or '[.in]``seqno``' (conflict resolution based on _sequence number_).
-This parameter defaults to '[.code]``seqno``' if unspecified.
-This cannot be changed once a bucket has been created.
-
-| `evictionPolicy`
-a|
-Optional parameter, a string.
-Possible values are `fullEviction` and `valueOnly`.
-The default is `valueOnly`.
-This parameter determines what is ejected: only the value or the key, value, and all metadata.
-
-IMPORTANT: If you change the ejection policy of a pre-existing bucket then it will be restarted, resulting in temporary inaccessibility of data while the bucket warms up.
-
-| `flushEnabled`
-| Optional parameter.
-Enables the ‘flush all’ functionality on the specified bucket.
-Boolean.
-1 enables flush all support, 0 disables flush all support.
-Defaults to 0.
-
-| `name`
-| Required parameter.
-Name for new bucket.
-This cannot be changed for a pre-existing bucket.
-A bucket name can only contain characters in the ranges of A-Z, a-z, and 0-9; with the addition of the underscore, period, dash and percent characters; and can be no more than 100 characters in length.
-
-| `parallelDBAndViewCompaction`
-| Optional parameter.
-String value.
-Indicates whether database and view files on disk can be compacted simultaneously.
-Defaults to "false."
-
-| `proxyPort`
-| Required parameter.
-Numeric.
-Proxy port on which the bucket communicates.
-Must be a valid network port which is not already in use.
-You must provide a valid port number if the authorization type is not SASL.
-
-| `ramQuotaMB`
-| Required parameter.
-RAM Quota for new bucket in MB.
-Numeric.
-The minimum you can specify is 100, and the maximum can only be as great as the memory quota established for the node.
-If other buckets are associated with a node, RAM Quota can only be as large as the amount memory remaining for the node, accounting for the other bucket memory quota.
-
-| `replicaIndex`
-| Optional parameter.
-Boolean.
-1 enable replica indexes for replica bucket data while 0 disables.
-Default of 1.
-This cannot be changed for a pre-existing bucket.
-
-| `replicaNumber`
-| Optional parameter.
-Numeric.
-Number of replicas to be configured for this bucket.
-Required parameter when creating a Couchbase bucket.
-Default 1, minimum 0, maximum 3.
-
-| `saslPassword`
-| Optional Parameter.
-String.
-Password for SASL authentication.
-Required if SASL authentication has been enabled.
-
-| `threadsNumber`
-a|
-Optional Parameter.
-Integer from 2 to 8.
-Change the number of concurrent readers and writers for the data bucket.
-
-IMPORTANT: If you change this setting for a pre-existing bucket then it will be restarted, resulting in temporary inaccessibility of data while the bucket warms up.
-
-| `maxTTL`
-| Optional Parameter.
-Specifies the maximum TTL (time-to-live) for all documents in bucket in seconds.
-If enabled and a document is mutated with no TTL or a TTL greater than than the maximum, its TTL will be set to the maximum TTL.
-Setting this option to 0 disables the use of maxTTL, and the largest TTL that is allowed is 2147483647.
-This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition.
-
-| `compressionMode`
-| Optional Parameter.
-Specifies the compression-mode of the bucket.
-There are three options; off, passive and active.
-All three modes are backwards compatible with older SDKs, where Couchbase Server will automatically uncompress documents for clients that do not understand the compression being used.
-This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition.
-
-`Off`: Couchbase Server will only compress document values when persisting to disk.
-This is suitable for use cases where compression could have a negative impact on performance.
-Please note it is expected that compression in most use cases will improve performance.
-
-`Passive`: Documents which were compressed by a client, or read compressed from disk will be stored compress in-memory.
-Couchbase Server will make no additional attempt to compress documents that are not already compressed.
-
-`Active`: Couchbase Server will actively and aggressively attempt to compress documents, even if they have not been received in a compressed format.
-This provides the benefits of compression even when the SDK clients are not complicit.
-|===
-
-When creating a bucket, the `authType` parameter must be provided:
-
-* If `authType` is set to `none`, then a proxyPort number must be specified.
-* If `authType` is set to `sasl`, then the `saslPassword` parameter may optionally be specified.
-
-The `ramQuotaMB` parameter specifies how much memory, in megabytes, is allocate to each node for the bucket.
-The minimum supported value is 100MB.
-
-* If the items stored in a memcached bucket take space beyond the `ramQuotaMB`, Couchbase Sever typically evicts items on a least-requested-item basis.
-Couchbase Server might evict other infrequently used items depending on object size or on whether or not an item is being referenced.
-* In the case of Couchbase buckets, the system might return temporary failures if the `ramQuotaMB` is reached.
-The system tries to keep 25% of the available ramQuotaMB free for new items by ejecting old items from occupying memory.
-In the event these items are later requested, they are retrieved from disk.
-
-== Syntax
-
-Curl request syntax:
-
-[source,bourne]
-----
-curl -X POST -u [admin]:[password]  http://[ip_address]:8091/pools/default/buckets
-  -d name=[new-bucket-name] -d ramQuotaMB=[value] -d authType=[none | sasl]
-  -d replicaNumber=[value]
-  -d proxyPort=[proxy-port]
-----
-
-== Example
-
-Curl request example:
-
-[source,bourne]
-----
-curl -X POST -u Administrator:password http://127.0.0.1:8091/pools/default/buckets \
--d name=newBucket -d ramQuotaMB=100 -d authType=none \
--d replicaNumber=2 \
--d proxyPort=11215
-----
-
-Curl request example to set conflict resolution type.
-Set the parameter [.param]`conflictResolutionType` to `lww` during bucket creation.
-For example, use the following command to create a bucket on the source cluster:
-
-[source,bourne]
-----
-curl -X POST -u Administrator:asdasd http://<ip_address>:8091/pools/default/buckets
--d name=newBucketSource -d conflictResolutionType=lww
--d authType=sasl -d ramQuotaMB=4096
--d saslPassword=passw0rd -d bucketType=couchbase
-----
-
-Use the following command to create a bucket on the destination cluster:
-
-[source,bourne]
-----
-curl -X POST -u Administrator:asdasd http://<ip_address>:8091/pools/default/buckets
--d name=newBucketDestination -d conflictResolutionType=lww
--d authType=sasl -d ramQuotaMB=4096
--d saslPassword=passw0rd -d bucketType=couchbase
-----
-
-Curl request to set maximum Bucket Time-To-Live, and to establish a compression mode:
-
-[source,bourne]
-----
-curl -X POST -u Administrator:password http://127.0.0.1:8091/pools/default/buckets \
--d name=myTestBucket -d ramQuotaMB=100 \
--d bucketType=couchbase -d maxTTL=20000 \
--d compressionMode=Passive
-----
-
-Curl request to edit an existing bucket:
-
-[source,bourne]
-----
-curl -X POST -u Administrator:password http://10.142.180.101:8091/pools/default/buckets/testBucket \
--d bucketType=couchbase \
--d autoCompactionDefined=false \
--d evictionPolicy=valueOnly \
--d threadsNumber=3 \
--d replicaNumber=1 \
--d compressionMode=passive \
--d maxTTL=20000 \
--d replicaIndex=0 \
--d ramQuotaMB=100 \
--d flushEnabled=0
-----
-
-Raw HTTP request example:
-
-The parameters for configuring the bucket are provided as payload data.
-Each parameter and value are provided as a key/value pair where each pair is separated by an ampersand.
-Include the parameters setting in the payload of the HTTP `POST` request.
-
-[source,bourne]
-----
-POST /pools/default/buckets
-HTTP/1.1
-Host: 10.5.2.54:8091
-Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-Authorization: Basic YWRtaW46YWRtaW4=
-Content-Length: xx
-name=newbucket&ramQuotaMB=20&authType=none&replicaNumber=2&proxyPort=11215
-----
+* `purgeInterval`.
+Specifies the tombstone (or metadata) purge interval.
+The value can be either an integer (indicating a number of days), or a float (indicating an interval that may be greater or less than one day, and entails a number of hours, with `0.04` indicating _one hour_).
+The default value is three days.
++
+If this parameter is incorrectly specified, an error-notification such as the following is returned: `{"purgeInterval":"metadata purge interval must be a number"}`.
++
+For more information see xref:manage:manage-settings/configure-compact-settings.adoc#tombstone-purge-interval[Tombstone Purge Interval] and xref:learn:buckets-memory-and-storage/storage.adoc[Storage].
++
+This parameter is ignored if `autoCompactionDefined` is `false` (which is its default value).
 
 == Response
 
