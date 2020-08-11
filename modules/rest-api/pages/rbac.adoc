@@ -118,4 +118,63 @@ If successful, the call returns `200 OK`, and an array such as the following:
 ]
 ----
 
-In this example, the object that is the sole member of the array contains values that specify the `domain`, the `role(s)`, the `groups`, the `external_groups`, the `name`, and the last `password_change_date` for a user who is currently the only one defined. 
+In this example, the object that is the sole member of the array contains values that specify the `domain`, the `role(s)`, the `groups`, the `external_groups`, the `name`, and the last `password_change_date` for a user who is currently the only one defined.
+
+=== List Currently Defined Groups
+
+To list currently defined user-groups, use the `GET` method with the `/settings/rbac/groups/`
+URI.
+The curl syntax is as follows:
+
+----
+curl -X GET -u <username:password>
+  http://<ip-address-or-domain-name>:8091/settings/rbac/groups
+----
+
+If successful, the call returns `200 OK`, and an array each of whose members is an object containing information on one of the user-groups currently defined on the cluster.
+
+==== Example: List Currently Defined Groups
+
+The following example lists all user-groups currently defined on the cluster:
+
+----
+curl -v -X GET -u Administrator:password \
+http://10.143.201.101:8091/settings/rbac/groups | jq
+----
+
+If successful, the call returns an array such as the following:
+
+----
+[
+  {
+    "id": "ClusterAdmins",
+    "roles": [
+      {
+        "role": "cluster_admin"
+      }
+    ],
+    "ldap_group_ref": "uid=cbadmins,ou=groups,dc=example,dc=com",
+    "description": "Couchbase Server Cluster Administrators"
+  },
+  {
+    "id": "RoAdmins",
+    "roles": [
+      {
+        "role": "ro_admin"
+      }
+    ],
+    "ldap_group_ref": "",
+    "description": "Administrators with Read Only Admin role."
+  },
+  {
+    "id": "XdcrAdmins",
+    "roles": [],
+    "ldap_group_ref": "",
+    "description": "Administrators with the XDCR Admin role"
+  }
+]
+----
+
+Thus, the array contains three members, which respectively contain information on the `ClusterAdmins`, `RoAdmins`, and `XdcrAdmins` groups.
+Note that the `ClusterAdmins` group is shown to have an `ldap_group_ref`: meaning that it corresponds to an LDAP group, defined on the LDAP server.
+For information, see xref:learn:security/authentication-domains.adoc#native-ldap-support[Native LDAP Support].
