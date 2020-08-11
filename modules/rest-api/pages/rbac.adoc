@@ -1,290 +1,121 @@
-= Role Based Admin Access (RBAC)
+= Role-Based Access Control (RBAC)
 :page-aliases: rest-bucket-auth,rest-user-create,rest-user-getname,rest-user-password-put,rest-user-delete
 
 [abstract]
-Full Administrators can manage the Couchbase _Role-Based Access Control_ (RBAC) system, using the REST API.
+Full  and Security Administrators can manage the Couchbase _Role-Based Access Control_ (RBAC) system, using the REST API.
 
-NOTE: This fine-grained access applies to the _Enterprise Edition_ of Couchbase Server.
-The _Community Edition_ is limited to the roles of `bucket_full_access`,
-`admin`, and `ro_admin`; see the
-xref:learn:security/authorization-overview.adoc[Authorization]
-page for further details.
+[#description]
+== Description
 
-== GET /settings/rbac/roles
+A Couchbase-Server _role_ permits one or more _resources_ to be accessed according to defined _privileges_.
+Roles can be assigned to individual users, and to groups, by means of the REST API.
 
-*Description*
+For a complete list of roles, see xref:learn:security/roles.adoc[Roles].
+Note that most roles can be assigned only on the _Enterprise Edition_ of Couchbase Server: on the _Community Edition_ of Couchbase Server, only the `bucket_full_access`,
+`admin`, and `ro_admin` roles can be assigned.
 
-This command retrieves information about the available roles.
+For more information, see xref:learn:security/authorization-overview.adoc[Authorization].
 
-*Syntax:*
+[#get-information-on-users-and-groups]
+== Retrieve Information on Roles, Users, and Groups
 
- $ curl -X GET http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/roles
+The REST API allows information to be retrieved on available roles; and on the cluster's currently defined users and groups.
+Curl syntax, parameter-descriptions, examples, and call-specific responses are described in the subsections below.
+See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
 
-== GET /settings/rbac/users
+=== List Roles
 
-*Description*
+To list roles, use the `GET` method with the `/settings/rbac/roles` URI.
+The curl syntax is as follows:
 
-This command retrieves information about the current users and the roles assigned to them.
-
-*Syntax:*
-
- $ curl -X GET http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users
-
-== PUT /settings/rbac/users/<user_id>
-
-*Description*
-
-This command sets the name and roles for the specified user ID.
-Note that the new user's password is expected to be accessible, when authentication is subsequently attempted, from an external domain.
-
-*Syntax:*
-
- $ curl -X PUT http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/<user_id>
-
-== PUT /settings/rbac/users/local/<user_id>
-
-*Description*
-
-This command sets name, role, and password for the specified user ID.
-Note that by these means, the new user is defined locally to Couchbase Server (the user's password having been provided as a parameter to this command).
-
-*Syntax:*
-
- $ curl -X PUT http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/local/<user_id>
-
-== DELETE /settings/rbac/users/<user_id>
-
-*Description*
-
-This command deletes the specified user.
-
-*Syntax:*
-
- $ curl -X DELETE http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/<user_id>
-
-== PUT /settings/rbac/groups/<group_name>
-
-*Description*
-
-This command establishes a Couchbase Server group, and associates it with specific roles.
-Optionally, it also associates the group with an LDAP group; allowing externally authenticated users thereby to inherit a Couchbase-Server group and roles, in correspondence with their existing LDAP group.
-
-*Syntax:*
-
-  $ curl -X PUT http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/groups/admins
-
-== POST /pools/default/checkPermissions
-
-*Description*
-
-This command checks the permissions on specified Couchbase Server-resources that have been assigned to the administrator whose credentials are specified in the command.
-
-*Syntax:*
-
- $ curl -X POST http://Administrator:adminpwd@127.0.0.1:8091/pools/default/checkPermissions
-
-== Examples
-
-Get a list of available roles::
-+
 ----
-GET /settings/rbac/roles
+curl -X GET -u <username:password>
+  http://<ip-address-or-domain-name>:8091/settings/rbac/roles
 ----
-+
-Returns an array of objects whose fields explain the available roles on the system.
-The first and second objects in the array might appear as follows:
-+
+
+If successful, this returns `200 OK`, and an array that contains a description of every available role.
+
+==== Example: List Roles
+
+The following example lists the roles for the current cluster.
+Note that in this example (as in others, below) the output is piped to the https://stedolan.github.io/jq/[jq] command, to facilitate readability.
+
+----
+curl -v -X GET http://10.143.201.101:8091/settings/rbac/roles \
+-u Administrator:password | jq
+----
+
+If successful, the call returns an array, containing information on every role:
+
 ----
 [
   {
-  "role": "replication_target",
-  "bucket_name": "*",
-  "name": "Replication Target",
-  "desc": "XDC replication target for bucket"
+    "role": "admin",
+    "name": "Full Admin",
+    "desc": "Can manage all cluster features (including security). This user can access the web console. This user can read and write all data.",
+    "ce": true
   },
   {
-  "role": "query_external_access",
-  "name": "Query External Access",
-  "desc": "Can execute CURL statement"
+    "role": "ro_admin",
+    "name": "Read-Only Admin",
+    "desc": "Can view all cluster statistics. This user can access the web console. This user can read some data.",
+    "ce": true
   },
-              .
-              .
+  {
+    "role": "security_admin",
+    "name": "Security Admin",
+    "desc": "Can view all cluster statistics and manage user roles, but not grant Full Admin or Security Admin roles to other users or alter their own role. This user can access the web console. This user cannot read data."
+  },
+            .
+            .
 ----
 
-Get a list of all current users and the roles they are assigned.::
-+
-----
-GET /settings/rbac/users
-----
-+
-For example:
-+
-[source,console]
-----
-$ curl -X GET http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users
+[#list-current-users-and-their-roles]
+=== List Current Users and Their Roles
 
+To list current users, use the `GET` method with the `/settings/rbac/users` URI.
+The curl syntax is as follows:
+
+----
+curl -X GET <ip-address-or-domain-name>:8091/settings/rbac/users
+  -u <username:password>
+----
+
+This returns an array, each of whose members is an object containing information on a currently defined user.
+
+[#example-list-current-users]
+==== Example: List Current Users
+
+The following example lists the users currently defined on the cluster:
+
+----
+curl -v -X GET http://10.143.201.101:8091/settings/rbac/users \
+-u Administrator:password | jq
+----
+
+If successful, the call returns `200 OK`, and an array such as the following:
+
+----
 [
   {
-    "name": "John Smith",
-    "id": "johnsmith",
+    "id": "testUser",
     "domain": "local",
     "roles": [
       {
-        "role": "cluster_admin"
+        "role": "ro_admin",
+        "origins": [
+          {
+            "type": "user"
+          }
+        ]
       }
-    ]
+    ],
+    "groups": [],
+    "external_groups": [],
+    "name": "",
+    "password_change_date": "2020-08-11T03:48:18.000Z"
   }
 ]
 ----
 
-Set the name, user ID, and roles for a new user.::
-+
-----
-PUT /settings/rbac/users/<user_id>
-----
-+
-In this example, John Doe is assigned to be Cluster Administrator, and also to be Bucket Administrator for the `travel-sample` bucket, with user ID of `johndoe`:
-
- $ curl -X PUT --data "name=John Doe&roles=cluster_admin,bucket_admin[travel-sample]" \
-               http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/johndoe
-+
-Note that by means of the command above, the user is listed by Couchbase Server as being in the _External_ authentication domain: this means that the user ID specified here is expected to match a user ID by which they are registered (with an appropriate password) on a _remote_ (for example, an _LDAP_) system.
-If the user ID specified in this command does not so match, the user is permitted no access to Couchbase Server-resources.
-See below for an example of adding user and roles by specifying a password to be stored locally.
-See
-xref:learn:security/authorization-overview.adoc[Authorization],
-for more information on defining users remotely.
-
-Set the name, user ID, roles, and password for a new user.::
-+
-----
-PUT /settings/rbac/users/local/<user_id>
-----
-+
-In this example, John Smith is assigned to be the Cluster Administrator, with password specified as `jspassword`, and user ID as `johnsmith`:
-
- $ curl -X PUT --data "name=John Smith&roles=cluster_admin&password=jspassword" \
-              -H "Content-Type: application/x-www-form-urlencoded" \
-              http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/local/johnsmith
-+
-Note that by means of the command above, the user is assigned to the _Local_ authentication domain: this means that they have been registered on Couchbase Server itself, with the password specified.
-
-Delete users::
-+
-----
-DELETE /settings/rbac/users/<user_id>
-----
-+
-In this example, the user identified by the user ID `alicesmith` is deleted.
-
- $ curl -X DELETE http://Administrator:adminpwd@127.0.0.1:8091/settings/rbac/users/alicesmith
-
-Create a Couchbase-Server group::
-+
-----
-PUT /settings/rbac/groups/<group_name>
-----
-+
-The following example creates a Couchbase Server group named _admins_, whose members are all assigned the _admin_ role.
-The group is associated with the LDAP group named _admins_:
-
- $ curl -v -X PUT -u Administrator:password \
-              http://10.143.192.101:8091/settings/rbac/groups/admins \
-              -d roles=admin \
-              -d description=Couchbase+Server+Administrators \
-              -d ldap_group_ref=domain%3Dadmins
-
-Check permissions::
-+
-----
-POST /pools/default/checkPermissions
-----
-+
-The following example checks the authenticating administrator's permissions on the `travel-sample` bucket, for reading bucket-statistics and for writing to the bucket:
-
- $ curl -X POST --data 'cluster.bucket[travel-sample].stats!read,cluster.bucket[travel-sample]!write' \
-             http://Administrator:adminpwd@127.0.0.1:8091/pools/default/checkPermissions
-+
-Output might appear as follows:
-+
-----
-{
-"cluster.bucket[travel-sample].stats!read": true,
-"cluster.bucket[default]!write": true
-}
-----
-
-== Reading Log Output
-
-The following examples of log output are provided, with comments to aid understanding..
-
-----
-{"name":"John Doe","id":"johndoe","roles":[{"role":"admin"}]}]
-        {'status': '200', 'content-length': '64', 'server': 'Couchbase Server', 'pragma': 'no-cache', \
-        'cache-control': 'no-cache', 'date': 'Mon, 13 Jun 2016 10:35:28 GMT',  'content-type': 'application/json’}
-----
-
-The first two lines indicate what is the admin role for the user John Doe.
-His role is set as admin.
-
-----
-2016-06-13 03:35:28,481 - root - INFO - http://172.23.107.7:8091/pools/default/buckets with param: \
-          bucketType=membase&evictionPolicy=valueOnly&threadsNumber=3&ramQuotaMB=100&proxyPort=11211&\
-          authType=sasl&name=default&flushEnabled=1&replicaNumber=1&replicaIndex=1&saslPassword=
-          2016-06-13 03:35:28,486 - root - ERROR - http://172.23.107.7:8091/pools/default/buckets error 400 reason: \
-          unknown {"errors":{"ramQuotaMB":"RAM quota specified is too large to be provisioned into this cluster.",\
-          "name":"Bucket with given name already exists","replicaNumber":\
-          "Warning: you do not have enough data servers to support this number of replicas."},"summaries":{"ramSummary":\
-          {"total":2111832064,"otherBuckets":2111832064,"nodesCount":1,"perNodeMegs":100, \
-          "thisAlloc":104857600,"thisUsed":0,"free":-104857600},"hddSummary":\
-          {"total":33278128128,"otherData":2990780812,"otherBuckets":4250719,"thisUsed":0,"free":30283096597}}}
-          2016-06-13 03:35:28,487 - root - INFO - Default Bucket already exists
-          rbacPermissionList().cluster_indexes_write('ritam123','password',host=self.master_ip,servers=self.servers, \
-          cluster=self.cluster,httpCode= \
-          [200, 201],user_role='admin’) - \
-          This is the actual call to function, note the httpCode this is expected httpCode to be returned.
-          2016-06-13 03:35:28,487 - root - INFO -  ----- Permission set is ------------\
-          {'indexes': "settings/indexes;POST;{'indexerThreads':5}", 'max_paralled_index': \
-          "settings/maxParallelIndexers;POST;{'globalValue':'8'}"} - \
-          You can the the REST API for cluster_index write permission.
-          {u'indexerThreads': 5}
-          <type 'dict'>
-            indexerThreads=5
-            {u'globalValue': u'8'}
-            <type 'dict'>
-              globalValue=8
-----
-
-Each role has a set permission and each permission has a list of resources: cluster_indexes_write – This is one of the permission for admin role.
-
-----
-2016-06-13 03:35:30,777 - root - INFO - http://172.23.107.7:8091/pools/default/buckets with param: \
-        bucketType=membase&evictionPolicy=valueOnly&threadsNumber=3&ramQuotaMB=100&proxyPort=11211& \
-        authType=sasl&name=default&flushEnabled=1&replicaNumber=1&replicaIndex=1&saslPassword=
-        2016-06-13 03:35:30,783 - root - ERROR - http://172.23.107.7:8091/pools/default/buckets error 400 reason: \
-        unknown {"errors":{"name":"Bucket with given name already exists","replicaNumber": \
-        "Warning: you do not have enough data servers to support this number of replicas."},"summaries":{"ramSummary": \
-        {"total":2111832064,"otherBuckets":104857600,"nodesCount":1,"perNodeMegs":100,"thisAlloc":104857600,"thisUsed":0, \
-        "free":1902116864},"hddSummary":{"total":33278128128,"otherData":2990780812, \
-        "otherBuckets":4250719,"thisUsed":0,"free":30283096597}}}
-        2016-06-13 03:35:30,783 - root - INFO - Default Bucket already exists
-        rbacPermissionList().cluster_admin_diag_write('ritam123','password',host=self.master_ip,servers=self.servers, \
-        cluster=self.cluster,httpCode=[200, 201],user_role='admin')
-        2016-06-13 03:35:30,784 - root - INFO -  ----- Permission set is ------------ \
-        {'eval': "/diag/eval;POST;{'ale':'set_loglevel(ns_server,error).'}"}
-        {u'ale': u'set_loglevel(ns_server,error).'}
-        <type 'dict'>
-          ale=set_loglevel%28ns_server%2Cerror%29.
-          2016-06-13 03:35:30,797 - root - ERROR - http://172.23.107.7:8091//diag/eval error 500 reason: \
-          status: 500, content: /diag/eval failed.
-          Error: {error,{badmatch,set_loglevel}}
-          Backtrace:
-          [{erl_eval,expr,3,[]}] /diag/eval failed.
-          Error: {error,{badmatch,set_loglevel}}
-          Backtrace:
-          [{erl_eval,expr,3,[]}]
-          Matching not found
-----
-
-Above is an example of failure since it includes the message "Matching not found".
-In this case, it is not an actual error because the values have not been passed correctly to /diag/eval correctly.
+In this example, the object that is the sole member of the array contains values that specify the `domain`, the `role(s)`, the `groups`, the `external_groups`, the `name`, and the last `password_change_date` for a user who is currently the only one defined. 
