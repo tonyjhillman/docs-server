@@ -178,3 +178,60 @@ If successful, the call returns an array such as the following:
 Thus, the array contains three members, which respectively contain information on the `ClusterAdmins`, `RoAdmins`, and `XdcrAdmins` groups.
 Note that the `ClusterAdmins` group is shown to have an `ldap_group_ref`: meaning that it corresponds to an LDAP group, defined on the LDAP server.
 For information, see xref:learn:security/authentication-domains.adoc#native-ldap-support[Native LDAP Support].
+
+[#create-users-and-groups]
+== Create Users and Groups
+
+The REST API allows users and groups to be created, and roles thereby assigned.
+Curl syntax, parameter-descriptions, examples, and call-specific responses are described in the subsections below.
+See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
+
+Users can be either _local_ or _external_.
+Groups can optionally be mapped to _external groups_, defined on an LDAP server.
+For information, see xref:learn:security/authentication-domains.adoc[Authentication Domains].
+
+[#create-a-local-user-and-assign-roles]
+=== Create a Local User, and Assign Roles
+
+To create a local user, use the `PUT` method with the `/settings/rbac/users/local/` URI.
+The curl syntax is as follows:
+
+----
+curl -X PUT -u <username>:<password>
+  http://<ip-address-or-domain-name>/settings/rbac/users/local/<new-username>
+  -d password=<password>
+  -d roles=[<role>]*
+----
+
+The specified `password` must conform to the settings established as described in xref:rest-api:rest-set-password-policy.adoc[Setting Password Policy].
+If multiple instances of `role` are specified, these must be comma-separated.
+
+If successful, the call returns `200 OK`.
+No object is returned.
+
+[#example-create-local-users]
+==== Examples: Create Local Users
+
+The following example creates a local user, assigning a single role.
+
+----
+curl -v -X PUT -u Administrator:password \
+http://10.143.201.101:8091/settings/rbac/users/local/dgreen \
+-d password=pwdpwd \
+-d roles=ro_admin
+----
+
+This assigns user `dgreen` the `ro_admin` role.
+
+Note that if multiple roles are to be assigned, these must be comma-separated.
+If a role is to be limited to a specific bucket, the bucket-name must follow the name of the role, without a separator, enclosed in square-brackets.
+This is demonstrated by the following example:
+
+----
+curl -v -X PUT -u Administrator:password \
+http://10.143.201.101:8091/settings/rbac/users/local/rbrown
+-d password=rbrownpassword \
+-d roles=bucket_admin[travel-sample],bucket_admin[beer-sample]
+----
+
+Thus, the new user `rbrown` is assigned the `bucket_admin` role on the `travel-sample` bucket, and is assigned the same role on the `beer-sample` bucket.
