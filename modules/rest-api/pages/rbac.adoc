@@ -139,6 +139,8 @@ The permission to be checked for must be preceded by the `!` character.
 
 A successful call returns `200 OK`, plus an object indicating whether the authenticating administrator's possession of the specified permission is `true` or `false`.
 
+For an alternative procedure whereby the authenticating administrator can retrieve information on their assigned roles, see xref:rest-api:rest-whoami.adoc[Who Am I?].
+
 [#examples-check-permissions]
 ==== Examples: Check Permissions
 
@@ -180,8 +182,8 @@ URI.
 The curl syntax is as follows:
 
 ----
-curl -X GET -u <username:password>
-  http://<ip-address-or-domain-name>:8091/settings/rbac/groups
+curl -X GET http://<ip-address-or-domain-name>:8091/settings/rbac/groups
+  -u <username:password>
 ----
 
 If successful, the call returns `200 OK`, and an array each of whose members is an object containing information on one of the user-groups currently defined on the cluster.
@@ -250,8 +252,8 @@ To create a local user, and assign them one or more roles, use the `PUT` method 
 The curl syntax is as follows:
 
 ----
-curl -X PUT -u <username>:<password>
-  http://<ip-address-or-domain-name>/settings/rbac/users/local/<new-username>
+curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/local/<new-username>
+  -u <username>:<password>
   -d password=<password>
   -d roles=[ <role> ]*
 ----
@@ -304,12 +306,12 @@ Thus, the new user `krichards` is assigned the `cluster_admin` role (this being 
 [#create-a-local-user-and-assign-to-a-group]
 === Create a Local User, and Assign to a Group
 
-To create a local user, and assign them to a group &#8212; thereby ensuring that they inherit the role or roles already assigned to the specified group &#8212; again use the `PUT` method with the `/settings/rbac/users/local` URI; this time, using the `groups` flag, instead of the `roles` flag.
+To create a local user, and assign them to a group &#8212; thereby ensuring that they inherit the role or roles already assigned to the specified group &#8212; again use the `PUT` method with the `/settings/rbac/users/local/<new-username>` URI; this time, using the `groups` flag, instead of the `roles` flag.
 The curl syntax is as follows:
 
 ----
-curl -X PUT -u <username>:<password>
-  http://<ip-address-or-domain-name>/settings/rbac/users/local/<new-username>
+curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/local/<new-username>
+  -u <username>:<password>
   -d password=<password>
   -d groups=[ <groupname> ]*
 ----
@@ -325,10 +327,42 @@ If successful, the call returns `200 OK`.
 The following example creates a local user named `sdavis`, and assigns them to two existing groups:
 
 ----
-curl -v -X  PUT -u Administrator:password \
-http://10.143.201.101:8091/settings/rbac/users/local/sdavis \
+curl -v -X  PUT http://10.143.201.101:8091/settings/rbac/users/local/sdavis \
+-u Administrator:password \
 -d groups=ClusterAdmins,XDCRAdmins \
 -d password=Sd4v1s938
 ----
 
 If successful, the call creates local user `sdavis` and adds them to the `ClusterAdmins` group and to the `XDCRAdmins` group.
+
+[#create-an-external-user-and-assign-roles]
+=== Create an External User, and Assign Roles
+
+To create an external user, and assign them one or more roles, use the `PUT` method with the `/settings/rbac/users/external/<new-username>` URI.
+The curl syntax is as follows:
+
+----
+curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/external/<new-username>
+  -u <username>:<password>
+  -d roles=[ <role> ]*
+----
+
+Note that no password need be specified, since this is expected to have been defined on an external server: the external server will be contacted by Couchbase Server, as part of the user-authentication procedure.
+
+If successful, the call returns `200 OK`.
+
+[#example-create-an-external-user-and-assign-roles]
+==== Example: Create an External User, Assigning Roles
+
+The following example creates an external user named `wgrey`:
+
+----
+curl -v -X PUT -u Administrator:password \
+http://10.143.201.101:8091/settings/rbac/users/external/wgrey \
+-d roles=cluster_admin
+----
+
+The new, external user is thus assigned the `cluster_admin` role.
+
+[#create-an-external-user-and-assign-to-a-group]
+=== Create an External User, and Assign to a Group
