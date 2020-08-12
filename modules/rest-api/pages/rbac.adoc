@@ -17,9 +17,9 @@ Note that most roles can be assigned only on the _Enterprise Edition_ of Couchba
 For more information, see xref:learn:security/authorization-overview.adoc[Authorization].
 
 [#get-information-on-users-and-groups]
-== Retrieve Information on Roles, Users, and Groups
+== Retrieve Information on Roles, Permissions, Users, and Groups
 
-The REST API allows information to be retrieved on available roles; and on the cluster's currently defined users and groups.
+The REST API allows information to be retrieved on available roles and permissions; and on the cluster's currently defined users and groups.
 Curl syntax, parameter-descriptions, examples, and call-specific responses are described in the subsections below.
 See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
 
@@ -29,8 +29,8 @@ To list roles, use the `GET` method with the `/settings/rbac/roles` URI.
 The curl syntax is as follows:
 
 ----
-curl -X GET -u <username:password>
-  http://<ip-address-or-domain-name>:8091/settings/rbac/roles
+curl -X GET http://<ip-address-or-domain-name>:8091/settings/rbac/roles
+  -u <username:password>
 ----
 
 If successful, this returns `200 OK`, and an array that contains a description of every available role.
@@ -77,7 +77,7 @@ To list current users, use the `GET` method with the `/settings/rbac/users` URI.
 The curl syntax is as follows:
 
 ----
-curl -X GET <ip-address-or-domain-name>:8091/settings/rbac/users
+curl -X GET http://<ip-address-or-domain-name>:8091/settings/rbac/users
   -u <username:password>
 ----
 
@@ -120,6 +120,65 @@ If successful, the call returns `200 OK`, and an array such as the following:
 
 In this example, the object that is the sole member of the array contains values that specify the `domain`, the `role(s)`, the `groups`, the `external_groups`, the `name`, and the last `password_change_date` for a user who is currently the only one defined.
 
+[#check-permissions]
+=== Check Permissions
+
+The REST API allows the permissions of the authenticating administrator to be confirmed, by means of the `POST` method and the `/pools/default/checkPermissions` URI.
+The curl syntax is as follows:
+
+----
+curl -X POST
+  http://<ip-address-or-domain-name>/pools/default/checkPermissions
+  -u <username>:<password>
+  -d <permissions-check-specification>
+----
+
+The `permissions-check-specification` must indicate whether the check is to be made at the level of the cluster (for permissions associated with global roles), or at the level of a bucket within the cluster (for permissions associated with bucket-specific roles); or at the level of a specific data-set associated with the buckets (such as `stats` or `views`); and must specify the permission (such as `read` or `write`) for which the check is to be made.
+Cluster, bucket, and data-set, if specified, must be separated from one another with a period.
+The permission to be checked for must be preceded by the `!` character.
+
+A successful call returns `200 OK`, plus an object indicating whether the authenticating administrator's possession of the specified permission is `true` or `false`.
+
+[#examples-check-permissions]
+==== Examples: Check Permissions
+
+The following example checks whether the authenticating administrator has `admin` permissions on the cluster (which is to say, the permission associated with the `cluster_admin` role):
+
+----
+curl -v -X POST http://10.143.201.101:8091/pools/default/checkPermissions \
+-u gsanderson:gsanderson \
+-d 'cluster!admin'
+----
+
+If the call is successful, and the authenticating administrator does has the specified permission, the following object is returned:
+
+----
+{"cluster!admin":true}
+----
+
+The following example checks whether the authenticating administrator has `read` permission on `stats` for the `travel-sample` bucket, and `write` permission on `travel-sample` data:
+
+----
+curl -v -X POST http://10.143.201.101:8091/pools/default/checkPermissions \
+-u Administrator:password \
+-d 'cluster.bucket[travel-sample].stats!read,cluster.bucket[travel-sample]!write' | jq
+----
+
+An object such as the following is returned:
+
+----
+{
+  "cluster.bucket[travel-sample].stats!read": true,
+  "cluster.bucket[travel-sample]!write": true
+}
+----
+
+
+
+
+
+
+
 === List Currently Defined Groups
 
 To list currently defined user-groups, use the `GET` method with the `/settings/rbac/groups/`
@@ -138,8 +197,8 @@ If successful, the call returns `200 OK`, and an array each of whose members is 
 The following example lists all user-groups currently defined on the cluster:
 
 ----
-curl -v -X GET -u Administrator:password \
-http://10.143.201.101:8091/settings/rbac/groups | jq
+curl -v -X GET http://10.143.201.101:8091/settings/rbac/groups \
+-u Administrator:password | jq
 ----
 
 If successful, the call returns an array such as the following:
@@ -215,8 +274,8 @@ No object is returned.
 The following example creates a local user, assigning a single role.
 
 ----
-curl -v -X PUT -u Administrator:password \
-http://10.143.201.101:8091/settings/rbac/users/local/dgreen \
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/dgreen \
+-u Administrator:password \
 -d password=pwdpwd \
 -d roles=ro_admin
 ----
@@ -228,10 +287,21 @@ If a role is to be limited to a specific bucket, the bucket-name must follow the
 This is demonstrated by the following example:
 
 ----
-curl -v -X PUT -u Administrator:password \
-http://10.143.201.101:8091/settings/rbac/users/local/rbrown
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/rbrown
+-u Administrator:password \
 -d password=rbrownpassword \
 -d roles=bucket_admin[travel-sample],bucket_admin[beer-sample]
 ----
 
 Thus, the new user `rbrown` is assigned the `bucket_admin` role on the `travel-sample` bucket, and is assigned the same role on the `beer-sample` bucket.
+
+The following example assigns one global role, and one bucket-specific:
+
+----
+curl -v -X PUT http://10.143.201.101/settings/rbac/users/local/krichards \
+-u Administrator:password \
+-d password=krpassword \
+-d roles=cluster_admin,bucket_admin[travel-sample]
+----
+
+Thus, the new user `krichards` is assigned the `cluster_admin` role (this being a global role), and the `bucket_admin` role for the `travel-sample` bucket only.
