@@ -173,12 +173,6 @@ An object such as the following is returned:
 }
 ----
 
-
-
-
-
-
-
 === List Currently Defined Groups
 
 To list currently defined user-groups, use the `GET` method with the `/settings/rbac/groups/`
