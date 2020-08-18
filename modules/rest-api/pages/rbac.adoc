@@ -343,7 +343,6 @@ The curl syntax is as follows:
 
 ----
 curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/external/<new-username>
-  -u <username>:<password>
   -d roles=[ <role> ]*
 ----
 
@@ -367,6 +366,24 @@ The new, external user is thus assigned the `cluster_admin` role.
 [#create-an-external-user-and-assign-to-a-group]
 === Create an External User, and Assign to a Group
 
+To create an external user, and assign them to one or more groups, use the `PUT` method with the `/settings/rbac/users/external/<new-username>` URI.
+The curl syntax is as follows:
+
+----
+curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/external/<new-username>
+  -d groups=[ <group> ]*
+----
+
+Each specified `group` must be the name of a Couchbase-Server user-group, defined on the cluster.
+The external user, when authenticated on the external server, will be granted the roles associated with each of the specified groups.
+
+Note that if the external user has been defined on the LDAP server as belonging to a particular LDAP group, and this LDAP group has been previously _mapped_ to an existing Couchbase-Server group, the user is granted the roles associated with the existing Couchbase-Server group, even if this Couchbase-Server group is not specified by means of the `groups` flag.
+
+For information on mapping LDAP groups to Couchbase-Server groups, see xref:rest-api:rbac.adoc#create-a-group-and-assign-it-roles[Create a Group and Assign it Roles], below.
+
+[#create-an-external-user-assigning-to-a-group]
+==== Example: Create an External User, Assigning to a Group
+
 The following example creates an external user named `rjones` and assigns them to two groups:
 
 ----
@@ -377,3 +394,60 @@ http://10.143.201.101:8091/settings/rbac/users/external/rjones \
 
 The new user `rjones` is thus assigned to the `ClusterAdmins` and `XDCRAdmins` groups.
 The user, once authenticated on an external server, inherits the roles associated with these Couchbase-Server groups.
+
+[#create-a-group-and-assign-it-roles]
+=== Create a Group, and Assign it Roles
+
+Couchbase Server allows the creation of local user-groups, to which roles can be assigned.
+Each user, local or external, who is a member of such a group inherits the roles that have been assigned to the group.
+Optionally, a local group can be _mapped_ to an external, LDAP group: this means that successfully authenticated external users who are a member of one or more LDAP groups can inherit, on Couchbase Server, the roles assigned to the corresponding local user-groups.
+
+All these actions can be performed by means of the REST API, using the `PUT` method and the `/settings/rbac/groups/<new-groupname>` URI.
+The curl syntax is as follows:
+
+----
+curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/groups/<new-groupname>
+  -u <username>:<password>
+  -d roles=[ <role> ]*
+  -d description=<description>
+  --data-urlencode ldap_group_ref=<ldap-group-reference>
+----
+
+Each specified `role` must be a Couchbase-Server role: each will be assigned to the new group, whose name is specified by `new-groupname`.
+Multiple roles must be separated by commas.
+The optional `description` can be multiple words, which must be separated from each other by the `+` character.
+The optional `ldap_group_ref`, which must be specified as URL-encoded, specifies an existing LDAP group to which the new, local Couchbase-Server group will be mapped.
+
+If successful, the call returns `200 OK`.
+
+[#examples-create-groups]
+==== Examples: Create Groups
+
+The following example creates a local group, and assigns it roles:
+
+----
+curl -v -X PUT -u Administrator:password \
+http://10.143.192.101:8091/settings/rbac/groups/roAdminGroup \
+-d roles=ro_admin
+----
+
+The example thus creates a new group named `roAdminGroup`, assigning the group the `ro_admin` role.
+All users who become members of `roAdminGroup` will thereby inherit the `ro_admin` role.
+
+The following example creates a new local group, mapping it to an external, LDAP group.
+
+----
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/groups/admins \
+-u Administrator:password \
+-d roles=cluster_admin \
+-d description=Couchbase+Server+Cluster+Administrators \
+--data-urlencode ldap_group_ref='uid=cbadmins,ou=groups,dc=example,dc=com'
+----
+
+The new, local group `admins` is thus created, and is assigned the `cluster_admin` role.
+The `description` _Couchbase Server Cluster Administrators_ is provided.
+The `ldap_group_ref` specifies that the new, local group be mapped to an existing LDAP group named `cbadmins`: therefore, users who successfully authenticate via LDAP, and are members of `cbadmins`, automatically inherit the roles assigned locally to the Couchbase-Server `admins` group.
+(Note, in consequence, that the _username_ of such users may not be registered at all on Couchbase Server: since their authentication occurs on the LDAP server; and the roles they require for Couchbase-Server-access may be acquired entirely through one or more mappings between Couchbase-Server and LDAP user-groups.)
+
+[#delete-users-and-groups]
+== Delete Users and Groups
