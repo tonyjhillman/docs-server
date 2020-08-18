@@ -21,7 +21,7 @@ For more information, see xref:learn:security/authorization-overview.adoc[Author
 
 The REST API allows information to be retrieved on available roles and permissions; and on the cluster's currently defined users and groups.
 Curl syntax, parameter-descriptions, examples, and call-specific responses are described in the subsections below.
-See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
+See the section xref:rest-api:rbac.adoc#responses[Responses], for further descriptions of error and other notifications.
 
 === List Roles
 
