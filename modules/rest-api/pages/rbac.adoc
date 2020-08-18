@@ -242,6 +242,7 @@ Curl syntax, parameter-descriptions, examples, and call-specific responses are d
 See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
 
 Users can be either _local_ or _external_.
+A local user may have the same username as an external user.
 Groups can optionally be mapped to _external groups_, defined on an LDAP server.
 For information, see xref:learn:security/authentication-domains.adoc[Authentication Domains].
 
@@ -451,3 +452,79 @@ The `ldap_group_ref` specifies that the new, local group be mapped to an existin
 
 [#delete-users-and-groups]
 == Delete Users and Groups
+
+Users and groups can be deleted by means of the `DELETE` method and appropriate URI.
+The curl syntax is as follows:
+
+----
+curl -X DELETE
+  http://<ip-address-or-hostname>/settings/rbac/users/local/<local-username>
+  -u <username>:<password>
+
+curl -X DELETE
+  http://<ip-address-or-hostname>/settings/rbac/users/external/<external-username>
+  -u <username>:<password>
+
+curl -X DELETE
+  http://<ip-address-or-hostname>/settings/rbac/groups/<groupname>
+  -u <username>:<password>
+----
+
+The `DELETE` method, used with the `/settings/rbac/users/local/<local-username>` URI, deletes a local user; used with the `/settings/rbac/users/external/<external-username>` URI, deletes and external user; and used with the `/settings/rbac/groups/<groupname>` URI, deletes a local group.
+
+In each case, if the call is successful, `200 OK` is returned.
+
+[#examples-delete-users-and-groups]
+==== Examples: Delete Users and Groups
+
+The following example deletes a local user:
+
+----
+curl -X DELETE  http://10.143.201.101:8091/settings/rbac/users/local/dgreen \
+-u Administrator:password
+----
+
+The local user `dgreen` is thus deleted from the Couchbase-Server cluster.
+
+The following example deletes an external user:
+
+----
+curl -X DELETE  http://10.143.201.101:8091/settings/rbac/users/external/wgrey \
+-u Administrator:password
+----
+
+The external user `wgrey` is thus deleted from the Couchbase-Server cluster.
+The user continues to exist on the external server on which their authentication is performed.
+
+The following example deletes a group:
+
+----
+curl -v -X DELETE http://10.143.201.101:8091/settings/rbac/groups/ClusterAdmins \
+-u Administrator:password
+----
+
+The local group `ClusterAdmins` is thus deleted.
+Users defined on the Couchbase-Server cluster as either local or external, whose roles were derived entirely from their membership of the `ClusterAdmins` group, henceforth continue to be registered as local users, but are assigned no roles; and therefore no longer have access to the Couchbase-Server cluster.
+If the `ClusterAdmins` group was mapped to an LDAP group, LDAP-authenticated users whose Couchbase-Server roles were derived entirely from that mapping are henceforth assigned no roles; and therefore no longer have access to the Couchbase-Server cluster.
+
+[#responses]
+== Responses
+
+If successful, `200 OK` is given.
+
+A malformed URI gives `405 Method Not Allowed`.
+Failure to authenticate gives `401 Unauthorized`.
+An improperly specified role fails with `400 Bad Request` and the message `{"errors":{"roles":"Cannot assign roles to user because the following roles are unknown, malformed or role parameters are undefined: [ro_admine]"}}`.
+An attempt to delete an already deleted user or group fails with `404 Object not found`, and a message such as `"User was not found."` or `"Group was not found."`.
+
+The creation of an already existing group or local or external user succeeds with `200 OK`: the user is recreated with the newly specified role-assignments and group-memberships; and the group is recreated with the newly specified role-assignments and, optionally, a newly specified mapping.
+
+[#see-also]
+== See Also
+
+See xref:learn:security/authentication-domains.adoc[Authentication Domains], for an overview of local and external domains, and how to define users respectively.
+See xref:learn:security/authorization-overview.adoc[Authorization], for an introduction to the principles of Couchbase authorization, including Role-Based Access Control.
+All roles defined by Couchbase Server are listed and explained in xref:learn:security/roles.adoc[Roles].
+
+xref:manage:manage-security/manage-users-and-roles.adoc[Manage Users, Groups, and Roles] provides step-by-step examples using the UI, CLI, and REST API.
+See xref:manage:manage-security/configure-ldap.adoc[Configure LDAP] for information on all aspects of LDAP-authentication configuration, including the mapping of groups.
