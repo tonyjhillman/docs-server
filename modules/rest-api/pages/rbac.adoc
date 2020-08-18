@@ -239,7 +239,7 @@ For information, see xref:learn:security/authentication-domains.adoc#native-ldap
 
 The REST API allows users and groups to be created, and roles thereby assigned.
 Curl syntax, parameter-descriptions, examples, and call-specific responses are described in the subsections below.
-See xref:rest-api:rbac.adoc[General Responses], for further descriptions of error notifications.
+See the section xref:rest-api:rbac.adoc#responses[Responses], for further descriptions of error and other notifications.
 
 Users can be either _local_ or _external_.
 A local user may have the same username as an external user.
@@ -344,6 +344,7 @@ The curl syntax is as follows:
 
 ----
 curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/external/<new-username>
+  -u <username:password>
   -d roles=[ <role> ]*
 ----
 
@@ -372,6 +373,7 @@ The curl syntax is as follows:
 
 ----
 curl -X PUT http://<ip-address-or-domain-name>/settings/rbac/users/external/<new-username>
+  -u <username:password>
   -d groups=[ <group> ]*
 ----
 
