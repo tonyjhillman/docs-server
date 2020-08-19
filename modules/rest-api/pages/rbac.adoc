@@ -285,7 +285,7 @@ If a role is to be limited to a specific bucket, the bucket-name must follow the
 This is demonstrated by the following example:
 
 ----
-curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/rbrown
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/rbrown \
 -u Administrator:password \
 -d password=rbrownpassword \
 -d roles=bucket_admin[travel-sample],bucket_admin[beer-sample]
@@ -296,7 +296,7 @@ Thus, the new user `rbrown` is assigned the `bucket_admin` role on the `travel-s
 The following example assigns one global role, and one bucket-specific:
 
 ----
-curl -v -X PUT http://10.143.201.101/settings/rbac/users/local/krichards \
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/krichards \
 -u Administrator:password \
 -d password=krpassword \
 -d roles=cluster_admin,bucket_admin[travel-sample]
@@ -430,7 +430,7 @@ The following example creates a local group, and assigns it roles:
 
 ----
 curl -v -X PUT -u Administrator:password \
-http://10.143.192.101:8091/settings/rbac/groups/roAdminGroup \
+http://10.143.201.101:8091/settings/rbac/groups/roAdminGroup \
 -d roles=ro_admin
 ----
 
@@ -518,15 +518,119 @@ A malformed URI gives `405 Method Not Allowed`.
 Failure to authenticate gives `401 Unauthorized`.
 An improperly specified role fails with `400 Bad Request` and the message `{"errors":{"roles":"Cannot assign roles to user because the following roles are unknown, malformed or role parameters are undefined: [ro_admine]"}}`.
 An attempt to delete an already deleted user or group fails with `404 Object not found`, and a message such as `"User was not found."` or `"Group was not found."`.
+An attempt to add a user to one or more non-existent groups fails with `400 Bad Request` and an error notification such as `"groups":"Groups do not exist: ClusterAdmins,XDCRAdmins"`.
 
 The creation of an already existing group or local or external user succeeds with `200 OK`: the user is recreated with the newly specified role-assignments and group-memberships; and the group is recreated with the newly specified role-assignments and, optionally, a newly specified mapping.
+
+[#audit-the-management-of-users-and-roles]
+== Audit the Management of Users and Roles
+
+Couchbase Server allows the management of users and roles to be _audited_.
+For a conceptual overview of auditing, see xref:learn:security/auditing.adoc[Auditing].
+For instructions on the management and configuration of auditing, see xref:manage:manage-security/manage-auditing.adoc[Manage Auditing].
+Note that the auditing facility is _off_ by default: therefore it must be explicitly enabled, in order to be used; and the scope of events to be audited may need to be explicitly specified.
+
+Once auditing is enabled, the file `audit.log` is written to an _audit log directory_, whose location is configurable.
+Details of actions taken in the management of users and groups are recorded in this file.
+
+For example, if the following call is used to create a user:
+
+----
+curl -v -X PUT http://10.143.201.101:8091/settings/rbac/users/local/dgreen \
+-u Administrator:password \
+-d password=pwdpwd \
+-d roles=ro_admin
+----
+
+The file `audit.log` might be examined as follows:
+
+----
+sudo more audit.log | grep dgreen | jq '.'
+----
+
+This produces output such as the following:
+
+----
+{
+  "description": "User was added or updated",
+  "groups": [],
+  "id": 8232,
+  "identity": {
+    "domain": "local",
+    "user": "dgreen"
+  },
+  "name": "set user",
+  "real_userid": {
+    "domain": "builtin",
+    "user": "Administrator"
+  },
+  "reason": "added",
+  "remote": {
+    "ip": "10.143.201.101",
+    "port": 36328
+  },
+  "roles": [
+    "ro_admin"
+  ],
+  "timestamp": "2020-08-19T03:25:27.513-07:00"
+}
+----
+
+This confirms that the user was created, with the specified roles; and provides additional contextual information.
+
+Likewise, if the following statement is used to create a group:
+
+----
+curl -v -X PUT -u Administrator:password \
+http://10.143.201.101:8091/settings/rbac/groups/roAdminGroup \
+-d roles=ro_admin
+----
+
+The file `audit.log` might be examined as follows:
+
+----
+sudo more audit.log | grep roAdminGroup | jq '.'
+----
+
+This produces output such as the following:
+
+----
+{
+  "description": "User group was added or updated",
+  "group_name": "roAdminGroup",
+  "id": 8244,
+  "name": "set user group",
+  "real_userid": {
+    "domain": "builtin",
+    "user": "Administrator"
+  },
+  "reason": "updated",
+  "remote": {
+    "ip": "10.143.201.101",
+    "port": 36334
+  },
+  "roles": [
+    "ro_admin"
+  ],
+  "timestamp": "2020-08-19T03:26:40.125-07:00"
+}
+----
+
+This confirms that the group `roAdminGroup` was created, with the specified roles, and provides additional contextual information.
 
 [#see-also]
 == See Also
 
-See xref:learn:security/authentication-domains.adoc[Authentication Domains], for an overview of local and external domains, and how to define users respectively.
+See xref:learn:security/authentication-domains.adoc[Authentication Domains], for an overview of local and external domains, and how to define users.
 See xref:learn:security/authorization-overview.adoc[Authorization], for an introduction to the principles of Couchbase authorization, including Role-Based Access Control.
 All roles defined by Couchbase Server are listed and explained in xref:learn:security/roles.adoc[Roles].
 
 xref:manage:manage-security/manage-users-and-roles.adoc[Manage Users, Groups, and Roles] provides step-by-step examples using the UI, CLI, and REST API.
 See xref:manage:manage-security/configure-ldap.adoc[Configure LDAP] for information on all aspects of LDAP-authentication configuration, including the mapping of groups.
+
+Information on configuring LDAP with the REST API is provided in xref:rest-api:rest-configure-ldap.adoc[Configure LDAP].
+
+Comprehensive information on managing users, groups, and roles with the CLI is provided on the reference page for xref:cli:cbcli/couchbase-cli-user-manage.adoc[user-manage].
+
+For a conceptual overview of auditing, see xref:learn:security/auditing.adoc[Auditing].
+For instructions on the management and configuration of auditing, see xref:manage:manage-security/manage-auditing.adoc[Manage Auditing].
