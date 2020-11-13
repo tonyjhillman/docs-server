@@ -290,7 +290,7 @@ If the value for `cipherSuites` is an empty list (`[]`), this specifies that the
 
 If successful, the call gives `200 OK`, and returns an empty array.
 
-For more information, see the REST API reference page xref:rest-api:rest-setting-security.adoc[Configure On-the-Wire Security].
+For more information, see the REST API reference page xref:rest-api:rest-setting-security.adoc[On-the-Wire Security API].
 
 [#manage-on-the-wire-security-per-service-with-the-rest-api]
 == Manage On-the-Wire Security Per Service, with the REST API

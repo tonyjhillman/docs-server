@@ -223,3 +223,10 @@ The output is as follows:
                 .
                 .
 ----
+
+[#see-also]
+== See Also
+
+A further discussion of the REST API for on-the-wire security management, and examples of using the CLI to configure on-the-wire security _globally_, are provided in xref:manage:manage-security/manage-tls.adoc[Manage TLS]
+
+A reference page for the CLI is provided in xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security].
