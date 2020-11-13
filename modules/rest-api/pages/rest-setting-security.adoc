@@ -1,15 +1,16 @@
-= Configure On-the-Wire Security
+= On-the-Wire Security API
 :page-topic-type: reference
 
 [abstract]
 Establish and retrieve cluster-wide settings for the use of encryption and cipher-suites.
+Settings can be made either _globally_ or _per service_.
 
-== HTTP method and URI
+== HTTP methods and URIs
 
 ----
-GET /settings/security
+GET /settings/security/[<service-name>]
 
-POST /settings/security
+POST /settings/security/[<service-name>]
 ----
 
 == Description
@@ -18,15 +19,17 @@ Allows settings to be established for the use of encryption.
 This includes the encryption _level_, for node-to-node encryption within the cluster;
 UI disablement over insecure connections; TLS minimum version; and a list of server-accepted cipher suites.
 
+
+
 [#curl-syntax]
 == Curl Syntax
 
 ----
 curl -X GET -u <administrator>:<password>
-  http://<host>:<port>/settings/security
+  http://<host>:<port>/settings/security/[<service-name>]
 
 curl -X POST -u <administrator>:<password>
-  http://<host>:<port>/settings/security
+  http://<host>:<port>/settings/security/[<service-name>]
   -d disableUIOverHttp=<true|false>
   -d disableUIOverHttps=<true|false>
   -d clusterEncryptionLevel=<all|control>
@@ -35,24 +38,37 @@ curl -X POST -u <administrator>:<password>
   -d cipherSuites=<list-of-accepted-cipher-suites>
 ----
 
+If used, the `<service-name>` parameter must be one of the following: `data` (Data Service), `fullTextSearch` (Search Service), `index` (Index Service), `eventing` (Eventing Service), `query` (Query Service), `analytics` (Analytics Service), `backup` (Backup Service), or `clusterManager` (the Cluster Manager).
+
+If the `<service-name>` path-parameter is not specified, the `GET` method returns _cluster-wide_ information on on-the-wire security (including the _global_ settings, and the _per cluster_ settings); while the `POST` establishes new _global_ settings.
+
+If the `<service-name>` path-parameter is specified, the `GET` method returns information on the specified service only; while the `POST` establishes new settings for the specified service.
+
+When a cluster is first created, since no custom settings exist either globally or per service, cluster-wide defaults are used for all settings.
+Subsequently, if any custom setting is established globally, and an equivalent custom setting has _not_ been made for one or more services, those services use the global setting.
+When a custom setting is made for a service, that setting is duly used by the service; and any equivalent global setting is ignored by the service.
+
 The syntax for the `POST` method includes the following:
 
 * `disableUIOverHttp`.
 Whether access to Couchbase Web Console should be disabled over http.
 Default is `false`, meaning that the console can be accessed over http.
+This is a _global_ parameter only: it cannot be set per service.
 
 * `disableUIOverHttps`.
 Whether access to Couchbase Web Console should be disabled over https.
 Default is `false`, meaning that the console can be accessed over https.
+This is a _global_ parameter only: it cannot be set per service.
 
 * `clusterEncryptionLevel`.
 Controls the level of encryption imposed on inter-node communications within the cluster.
 Can be either `control` (meaning that only server-management information is passed in encrypted form) or `all` (meaning that all information, including data handled by services, is passed in encrypted form).
 This can only be set after cluster encryption has been enabled: see xref:manage:manage-nodes/apply-node-to-node-encryption.adoc[Apply Node-to-Node Encryption].
+This is a _global_ parameter only: it cannot be set per service.
 
 * `tlsMinVersion`.
 Specifies the minimum TLS version accepted by the cluster.
-Can be `tlsv1`, `tlsv1.1`, or `tlsv1.1`.
+Can be `tlsv1`, `tlsv1.1`, `tlsv1.2`, or `tlsv1.3`.
 The default is `tlsv1`.
 
 * `honorCipherOrder`.
@@ -61,10 +77,19 @@ The cluster's list of accepted cipher-suites can be defined with the `cipherSuit
 The default value of `honorCipherOrder` is `true`: a setting of `false` is _not_ recommended, since insecure.
 
 * `cipherSuites`.
-Specifies a list of the cipher suites to be used by the cluster, in order of preference.
+Specifies a list of the cipher suites to be used, in order of preference.
 The argument must be a list of cipher suites, each of which is supported by the underlying operating system.
-If the value for `cipherSuites` is an empty list (`[]`), this specifies that the Couchbase Server default cipher-suite list is to be used.
+If the global value for `cipherSuites` is an empty list (`[]`), this specifies that no global cipher-suite list has been established.
+If no cipher-suite list is established for a given service, that service uses the value established globally.
+If no cipher-suite has been established globally, the default cipher-suite list provided by the operating system is used.
 Use `openssl ciphers -v` at the Linux command-line, to display the default list of cipher-suites available from the operating system.
+
+* `supportedCipherSuites`.
+A per service array whose members are the cipher-suites supported by the service.
+The array is for informational purposes, and is _read-only_.
+Any per service value established for `cipherSuites` must only use elements from the `supportedCipherSuites` array.
+
+If for a given service, no value has been established for `tlsMinVersion`, `honorCipherOrder`, or `cipherSuites`, no corresponding key-value pair is included in information returned for that service by `GET`.
 
 [#responses]
 == Responses
@@ -102,7 +127,7 @@ The methods and the URI can be used as shown below.
 [#establish-encryption-settings]
 === Establish Encryption Settings
 
-The following establishes encryption settings for the cluster:
+The following establishes global settings for the cluster:
 
 ----
 curl  -u Administrator:password -v -X POST \
@@ -127,14 +152,14 @@ If successful, the call returns an empty array:
 ----
 
 [#retrieve-encryption-settings]
-=== Retrieve Encryption Settings
+=== Retrieve Cluster-Wide Settings
 
-The `GET /settings/security` method and URI retrieve encryption settings for the cluster, as shown below.
-Note that the output is piped to the https://stedolan.github.io/jq/[jq] program, to enhance readability:
+The `GET /settings/security` method and URI retrieve cluster-wide on-the-wire security settings, as shown below.
+Note that the output is piped to the https://stedolan.github.io/jq/[jq^] program, to enhance readability:
 
 ----
-curl  -u Administrator:password -v -GET \
-http://10.143.192.101:8091/settings/security | jq '.'
+curl  -u Administrator:password -v -X GET \
+http://10.144.210.101:8091/settings/security | jq '.'
 ----
 
 If the call is successful, and occurs prior to any explicit settings by the administrator, the output is as follows:
@@ -143,27 +168,58 @@ If the call is successful, and occurs prior to any explicit settings by the admi
 {
   "disableUIOverHttp": false,
   "disableUIOverHttps": false,
-  "tlsMinVersion": "tlsv1",
-  "cipherSuites": [],
-  "honorCipherOrder": true
-}
-----
-
-If explicit settings have been made &#8212; including the enablement of node-to-node encryption &#8212; the output might appear as follows:
-
-----
-{
-  "disableUIOverHttp": false,
-  "disableUIOverHttps": false,
-  "tlsMinVersion": "tlsv1.1",
+  "disableWWWAuthenticate": false,
+  "tlsMinVersion": "tlsv1.2",
   "cipherSuites": [
     "TLS_RSA_WITH_AES_128_CBC_SHA",
     "TLS_RSA_WITH_AES_256_CBC_SHA"
   ],
   "honorCipherOrder": true,
-  "clusterEncryptionLevel": "control"
-}
+  "data": {
+    "supportedCipherSuites": [
+      "TLS_AES_256_GCM_SHA384",
+              .
+              .
+              .
 ----
 
-The returned object thus includes each of the settings &#8212; including `clusterEncryptionLevel` &#8212; with its current value.
-An array containing the established list of server-acceptable cipher suites is provided as the value of `cipherSuites`.
+The returned object (shown here in truncated form) contains the global on-the-wire settings and a subdocument for each service.
+
+[#set-per-service-security-settings]
+=== Set Per Service Security Settings
+
+The following expression uses the `POST` method with the `/settings/security/<service-name>` URI, to establish a cipher-suite list for the Data Service.
+
+----
+curl -u Administrator:password -v -X POST \
+http://10.144.210.101:8091/settings/security/data \
+-d 'cipherSuites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"]'
+----
+
+If successful, the call returns `200 OK` and an empty array.
+The results can be reviewed, by means of the `GET` method with the `/settings/security/data` URI:
+
+----
+curl  -u Administrator:password -v -X GET \
+http://10.144.210.101:8091/settings/security/data | jq '.'
+----
+
+The output is as follows:
+
+----
+{
+  "cipherSuites": [
+    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
+  ],
+  "supportedCipherSuites": [
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_CHACHA20_POLY1305_SHA256",
+    "TLS_AES_128_GCM_SHA256",
+    "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                .
+                .
+                .
+----

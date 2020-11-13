@@ -60,7 +60,7 @@ An array whose members are the cipher-suites for the service.
 The array is for informational purposes, and is _read-only_.
 
 In addition to those listed above, several additional on-the-wire parameters are provided, these being _global-only_.
-For details, see the CLI reference page for xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security]; and the REST reference page xref:rest-api:rest-setting-security.adoc[Configure On-the-Wire Security].
+For details, see the CLI reference page for xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security]; and the REST reference page xref:rest-api:rest-setting-security.adoc[On-the-Wire Security API].
 
 [#manage-on-the-wire-security-with-the-cli]
 == Manage On-the-Wire Security Globally, with the CLI
@@ -171,7 +171,7 @@ If successful, the command returns output such as the following:
 
 The returned object contains attribute-value pairs that represent the current cluster-wide on-the-wire security configuration.
 
-For information on the first three attributes shown in this example &#8212;   `disableUIOverHttp`, `disableUIOverHttps`, and `disableWWWAuthenticate` &#8212; see the CLI reference page for xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security]; and the REST reference page xref:rest-api:rest-setting-security.adoc[Configure On-the-Wire Security].
+For information on the first three attributes shown in this example &#8212;   `disableUIOverHttp`, `disableUIOverHttps`, and `disableWWWAuthenticate` &#8212; see the CLI reference page for xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security]; and the REST reference page xref:rest-api:rest-setting-security.adoc[On-the-Wire Security API].
 
 The `tlsMinVersion` is shown as set to the default value, which is `tlsv1`.
 Likewise, the value of `honorCipherOrder` is the default, which is `true`.
@@ -364,7 +364,7 @@ The results can now be checked, by (again) using the `GET` method with the `/set
 
 The returned object (shown here in truncated form) indicates that the cipher-suite list specified in the `POST` has duly been made the list for the Data Service.
 
-For more information, see xref:rest-api:rest-setting-security.adoc[Configure On-the-Wire Security].
+For more information, see xref:rest-api:rest-setting-security.adoc[On-the-Wire Security API].
 
 [#alternative-cipher-suite-list-configuration]
 == Alternative Global Cipher-Suite List-Configuration
