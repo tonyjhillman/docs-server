@@ -29,7 +29,7 @@ See xref:learn:clusters-and-availability/node-to-node-encryption.adoc[Node-to-No
 
 * *TLS Configuration*.
 To support secure communications between nodes, clusters, and clients, Couchbase Server provides interfaces for the configuration of _TLS_ and supportive _cipher-suites_.
-See xref:manage:manage-security/manage-tls.adoc[Manage Security Settings].
+See xref:manage:manage-security/manage-tls.adoc[Manage TLS].
 
 * *Secure Console Access*.
 Administrators can connect securely to Couchbase Web Console.
@@ -54,8 +54,7 @@ This page also provides information on working with different versions of SSL/TL
 
 ** xref:manage:manage-xdcr/enable-full-secure-replication.adoc[Enable Fully Secure Replications] describes how certificates can be used to ensure that data is replicated securely between clusters.
 
-** xref:rest-api:rest-encryption.adoc[Encryption On-the-Wire API] lists the REST API methods and URIs available for certificate management.
-Also see xref:rest-api:security-encrypted-access.adoc[Using REST for Encrypted Access].
+** xref:rest-api:rest-certificate-management.adoc[Certificate Management API] lists the REST API methods and URIs available for certificate management.
 
 ** The xref:cli:cbcli/couchbase-cli-ssl-manage.adoc[ssl-manage] CLI command supports management of SSL certificates.
 
