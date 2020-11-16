@@ -41,7 +41,6 @@ These are as follows:
 Specifies the minimum accepted TLS version.
 The value can be `tlsv1` (the default), `tlsv1.1`, `tlsv1.2`, or `tlsv1.3`.
 +
-This parameter can be established both globally and per service.
 However, a value of `tlsv1.3` can be established only for the following services: `data`, `fullTextSearch`, `index`, `eventing`, `query`, `analytics`, and `backup`.
 
 * *honorCipherOrder*.
@@ -236,7 +235,7 @@ See xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security], for in
 [#manage-ciphers-with-the-rest-api]
 == Manage On-the-Wire Security Globally, with the REST API
 
-To manage on-the-wire security settings globally, with the REST API, use the `GET` and `POST` methods with the `/settings/security` URI.
+To manage on-the-wire security settings globally, with the REST API, use the `GET`, `POST`, and `DELETE` methods with the `/settings/security` URI.
 
 [#get-the-cluster-wide-security-settings-with-the-rest-api]
 === Get the Cluster-Wide Security Settings, with the REST API
@@ -365,6 +364,20 @@ The results can now be checked, by (again) using the `GET` method with the `/set
 The returned object (shown here in truncated form) indicates that the cipher-suite list specified in the `POST` has duly been made the list for the Data Service.
 
 For more information, see xref:rest-api:rest-setting-security.adoc[On-the-Wire Security API].
+
+[#delete-per-service-security-settings-with-the-rest-api]
+=== Delete Per Service Security Settings, with the REST API
+
+The following expression uses the `DELETE` method with the `/settings/security/<service-name>` URI, to delete all custom settings for a service.
+(Note that the `DELETE` method _cannot_ be used on global settings.)
+
+----
+curl -u Administrator:password -v -X DELETE \
+http://10.144.210.101:8091/settings/security/data
+----
+
+If successful, the call returns `200 OK` and an empty array.
+Once the per-service setting has been deleted, the service reverts, per-parameter to using the global setting (or, if no global setting is established, to the default).
 
 [#alternative-cipher-suite-list-configuration]
 == Alternative Global Cipher-Suite List-Configuration

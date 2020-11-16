@@ -11,6 +11,8 @@ Settings can be made either _globally_ or _per service_.
 GET /settings/security/[<service-name>]
 
 POST /settings/security/[<service-name>]
+
+DELETE /settings/security/<service-name>
 ----
 
 == Description
@@ -18,8 +20,8 @@ POST /settings/security/[<service-name>]
 Allows settings to be established for the use of encryption.
 This includes the encryption _level_, for node-to-node encryption within the cluster;
 UI disablement over insecure connections; TLS minimum version; and a list of server-accepted cipher suites.
-
-
+Settings established for an individual service can be deleted, by means of the `DELETE` method.
+(Note that the `DELETE` method _cannot_ be used on global settings.)
 
 [#curl-syntax]
 == Curl Syntax
@@ -33,20 +35,26 @@ curl -X POST -u <administrator>:<password>
   -d disableUIOverHttp=<true|false>
   -d disableUIOverHttps=<true|false>
   -d clusterEncryptionLevel=<all|control>
-  -d tlsMinVersion=<tlsv1|tlsv1.1|tslv1.2>
+  -d tlsMinVersion=<tlsv1|tlsv1.1|tslv1.2|tlsv1.3>
   -d honorCipherOrder=<true|false>
   -d cipherSuites=<list-of-accepted-cipher-suites>
+
+curl -X DELETE -u <administrator>:<password>
+  http://<host>:<port>/settings/security/<service-name>
 ----
 
 If used, the `<service-name>` parameter must be one of the following: `data` (Data Service), `fullTextSearch` (Search Service), `index` (Index Service), `eventing` (Eventing Service), `query` (Query Service), `analytics` (Analytics Service), `backup` (Backup Service), or `clusterManager` (the Cluster Manager).
 
-If the `<service-name>` path-parameter is not specified, the `GET` method returns _cluster-wide_ information on on-the-wire security (including the _global_ settings, and the _per cluster_ settings); while the `POST` establishes new _global_ settings.
+If the optional `<service-name>` path-parameter is not specified, the `GET` method returns _cluster-wide_ information on on-the-wire security (including the _global_ settings, and the _per cluster_ settings); while the `POST` establishes new _global_ settings.
 
-If the `<service-name>` path-parameter is specified, the `GET` method returns information on the specified service only; while the `POST` establishes new settings for the specified service.
+If the optional `<service-name>` path-parameter _is_ specified, the `GET` method returns information on the specified service only; while the `POST` establishes new settings for the specified service.
+
+The `DELETE` method can only be used when a `<service-name>` path-parameter is specified; and deletes all the custom-settings for the specified service.
 
 When a cluster is first created, since no custom settings exist either globally or per service, cluster-wide defaults are used for all settings.
 Subsequently, if any custom setting is established globally, and an equivalent custom setting has _not_ been made for one or more services, those services use the global setting.
 When a custom setting is made for a service, that setting is duly used by the service; and any equivalent global setting is ignored by the service.
+When custom settings for a service are deleted, the service reverts to using cluster-wide defaults.
 
 The syntax for the `POST` method includes the following:
 
@@ -67,17 +75,20 @@ This can only be set after cluster encryption has been enabled: see xref:manage:
 This is a _global_ parameter only: it cannot be set per service.
 
 * `tlsMinVersion`.
-Specifies the minimum TLS version accepted by the cluster.
-Can be `tlsv1`, `tlsv1.1`, `tlsv1.2`, or `tlsv1.3`.
-The default is `tlsv1`.
+Specifies the minimum accepted TLS version.
+This parameter can be established both globally and per service.
+The value can be `tlsv1` (the default), `tlsv1.1`, `tlsv1.2`, or `tlsv1.3`.
+Note, however, that a value of `tlsv1.3` can be established only for the following services: `data`, `fullTextSearch`, `index`, `eventing`, `query`, `analytics`, and `backup`.
 
 * `honorCipherOrder`.
-Specifies whether the cluster uses its own cipher-suite preference, rather than the client's.
+Specifies whether the server uses its own cipher-suite preference, rather than the client's.
+This parameter can be established both globally and per service.
 The cluster's list of accepted cipher-suites can be defined with the `cipherSuites` flag (see below).
 The default value of `honorCipherOrder` is `true`: a setting of `false` is _not_ recommended, since insecure.
 
 * `cipherSuites`.
 Specifies a list of the cipher suites to be used, in order of preference.
+This parameter can be established both globally and per service.
 The argument must be a list of cipher suites, each of which is supported by the underlying operating system.
 If the global value for `cipherSuites` is an empty list (`[]`), this specifies that no global cipher-suite list has been established.
 If no cipher-suite list is established for a given service, that service uses the value established globally.
@@ -85,9 +96,9 @@ If no cipher-suite has been established globally, the default cipher-suite list 
 Use `openssl ciphers -v` at the Linux command-line, to display the default list of cipher-suites available from the operating system.
 
 * `supportedCipherSuites`.
-A per service array whose members are the cipher-suites supported by the service.
+A per-service array whose members are the cipher-suites supported by the service.
 The array is for informational purposes, and is _read-only_.
-Any per service value established for `cipherSuites` must only use elements from the `supportedCipherSuites` array.
+Any per-service value established for `cipherSuites` must only use elements from the `supportedCipherSuites` array.
 
 If for a given service, no value has been established for `tlsMinVersion`, `honorCipherOrder`, or `cipherSuites`, no corresponding key-value pair is included in information returned for that service by `GET`.
 
@@ -124,8 +135,40 @@ See xref:manage:manage-nodes/apply-node-to-node-encryption.adoc[Apply Node-to-No
 
 The methods and the URI can be used as shown below.
 
+[#retrieve-encryption-settings]
+=== Retrieve Cluster-Wide Settings
+
+The `GET /settings/security` method and URI retrieve cluster-wide on-the-wire security settings, as shown in the following example.
+Note that the output is piped to the https://stedolan.github.io/jq/[jq^] program, to enhance readability:
+
+----
+curl  -u Administrator:password -v -X GET \
+http://10.144.210.101:8091/settings/security | jq '.'
+----
+
+If the call is successful, and occurs prior to any explicit settings by the administrator, the output is as follows:
+
+----
+{
+  "disableUIOverHttp": false,
+  "disableUIOverHttps": false,
+  "disableWWWAuthenticate": false,
+  "tlsMinVersion": "tlsv1",
+  "cipherSuites": [],
+  "honorCipherOrder": true,
+  "data": {
+    "supportedCipherSuites": [
+      "TLS_AES_256_GCM_SHA384",
+              .
+              .
+              .
+----
+
+The returned object (shown here in truncated form) contains the global on-the-wire settings and a subdocument for each service.
+Note that the value of the global `cipherSuites` attributes in an empty array, meaning that no global cipher-suite list has yet been configured by the administrator.
+
 [#establish-encryption-settings]
-=== Establish Encryption Settings
+=== Establish Global Settings
 
 The following establishes global settings for the cluster:
 
@@ -151,42 +194,34 @@ If successful, the call returns an empty array:
 []
 ----
 
-[#retrieve-encryption-settings]
-=== Retrieve Cluster-Wide Settings
+[#retrieve-per-service-settings]
+=== Retrieve Per-Service Settings
 
-The `GET /settings/security` method and URI retrieve cluster-wide on-the-wire security settings, as shown below.
-Note that the output is piped to the https://stedolan.github.io/jq/[jq^] program, to enhance readability:
+The following expression uses the `GET` method with the `/settings/security/<service-name>` URI, to retrieve the current settings for the Data Service.
 
 ----
 curl  -u Administrator:password -v -X GET \
-http://10.144.210.101:8091/settings/security | jq '.'
+http://10.144.210.101:8091/settings/security/data | jq '.'
 ----
 
-If the call is successful, and occurs prior to any explicit settings by the administrator, the output is as follows:
+If successful, the call returns an object such as the following:
 
 ----
 {
-  "disableUIOverHttp": false,
-  "disableUIOverHttps": false,
-  "disableWWWAuthenticate": false,
-  "tlsMinVersion": "tlsv1.2",
-  "cipherSuites": [
-    "TLS_RSA_WITH_AES_128_CBC_SHA",
-    "TLS_RSA_WITH_AES_256_CBC_SHA"
-  ],
-  "honorCipherOrder": true,
-  "data": {
-    "supportedCipherSuites": [
-      "TLS_AES_256_GCM_SHA384",
+  "supportedCipherSuites": [
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_CHACHA20_POLY1305_SHA256",
+    "TLS_AES_128_GCM_SHA256",
               .
               .
               .
 ----
 
-The returned object (shown here in truncated form) contains the global on-the-wire settings and a subdocument for each service.
+The output, shown here in truncated form, contains only the read-only `supportedCipherSuites` attribute and value.
+This indicates that no custom settings have yet been established for the Data Service.
 
 [#set-per-service-security-settings]
-=== Set Per Service Security Settings
+=== Establish Per-Service Settings
 
 The following expression uses the `POST` method with the `/settings/security/<service-name>` URI, to establish a cipher-suite list for the Data Service.
 
@@ -197,7 +232,7 @@ http://10.144.210.101:8091/settings/security/data \
 ----
 
 If successful, the call returns `200 OK` and an empty array.
-The results can be reviewed, by means of the `GET` method with the `/settings/security/data` URI:
+The results can be again reviewed by means of the `GET` method with the `/settings/security/data` URI:
 
 ----
 curl  -u Administrator:password -v -X GET \
@@ -223,6 +258,22 @@ The output is as follows:
                 .
                 .
 ----
+
+This indicates that a `cipherSuites` setting for the Data Service has been successfully established.
+
+[#delete-per-service-settings]
+=== Delete Per-Service Settings
+
+The following expression uses the `DELETE` method with the `/settings/security/<service-name>` URI, to delete all custom settings for a service.
+(Note that the `DELETE` method _cannot_ be used on global settings.)
+
+----
+curl -u Administrator:password -v -X DELETE \
+http://10.144.210.101:8091/settings/security/data
+----
+
+If successful, the call returns `200 OK` and an empty array.
+Once the per-service setting has been deleted, the service reverts, per-parameter to using the global setting (or, if no global setting is established, to the default).
 
 [#see-also]
 == See Also
