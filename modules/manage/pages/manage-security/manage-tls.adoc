@@ -26,7 +26,7 @@ The services are `data` (Data Service), `fullTextSearch` (Search Service), `inde
 
 Also treated as a service, in the context of on-the-wire security settings, is the Couchbase-Server _Cluster Manager_ (referred to as `clusterManager`).
 
-When a cluster is first created, since no custom settings exist either globally or per service, cluster-wide defaults are used for all settings: these are described in xref:manage:manage-security/manage-tls.adoc#security-settings[Security Settings], below.
+When a cluster is first created, since no custom settings exist either globally or per service, cluster-wide defaults are used for all settings: these are described in xref:manage:manage-security/manage-tls.adoc#security-settings[On-the-Wire Security Settings], below.
 Subsequently, if any custom setting is created globally, and an equivalent custom setting has _not_ been made for one or more services, those services use the global setting.
 When a custom setting is made for a service, that setting is duly used by the service; and any equivalent global setting is ignored by the service.
 
