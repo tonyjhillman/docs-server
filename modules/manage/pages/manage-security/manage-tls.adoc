@@ -170,7 +170,7 @@ The returned object contains attribute-value pairs that represent the current cl
 For information on the first three attributes shown in this example &#8212;   `disableUIOverHttp`, `disableUIOverHttps`, and `disableWWWAuthenticate` &#8212; see the CLI reference page for xref:cli:cbcli/couchbase-cli-setting-security.adoc[setting-security]; and the REST reference page xref:rest-api:rest-setting-security.adoc[Configure On-the-Wire Security].
 
 The `tlsMinVersion` is shown as set to the default value, which is `tlsv1`.
-Likewise, the value of `honorCipherOrder` is the default, whih is `true`.
+Likewise, the value of `honorCipherOrder` is the default, which is `true`.
 
 No custom cipher-suite list has been provided as the value of `cipherSuites`: accordingly, the array is empty.
 
